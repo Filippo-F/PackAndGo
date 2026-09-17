@@ -23,6 +23,7 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 PROFILE_IMG_SIZE = 100  # Thumbnail 100x100 px
 MAX_WIDTH = 800  # Massima larghezza immagine proposta
 MAX_HEIGHT = 600 # Massima altezza immagine proposta
+MAX_BUDGET = 100_000_000  # Valore massimo di ogni voce di budget, uguale al limite dei campi nel form
 MAX_UPLOAD_MB = 10  # Dimensione massima di una richiesta con upload, oltre Flask risponde con errore 413
 MAX_IMAGE_PIXELS = 50_000_000  # Massimo 50 megapixel: evita immagini piccole su disco ma enormi una volta decompresse
 ERRORI_IMMAGINE = (OSError, ValueError, Image.DecompressionBombError)  # Errori di Pillow per file non validi o troppo grandi
@@ -173,41 +174,15 @@ Gestione delle proposte di viaggio
 """
 
 
-@app.route('/proposte_bozze', methods=['GET'])
-@login_required
-def lista_bozze():
-    """Mostra solo le proposte in bozza del coordinatore loggato."""
-    if current_user.tipo_utente != 1:
-        flash("Accesso negato: questa sezione è riservata ai coordinatori.", "danger")
-        return redirect(url_for('home'))
-
-    bozze = proposte_viaggio_dao.get_bozze_by_coordinatore(current_user.id)
-    return redirect(url_for('dashboard'), bozze=bozze)  
-
-
-@app.route('/proposte_pubblicate', methods=['GET'])
-@login_required
-def lista_pubblicate():
-    """Mostra solo le proposte pubblicate del coordinatore loggato."""
-    if current_user.tipo_utente != 1:
-        flash("Accesso negato: questa sezione è riservata ai coordinatori.", "danger")
-        return redirect(url_for('home'))
-
-    pubblicate = proposte_viaggio_dao.get_pubblicate_by_coordinatore(current_user.id)
-    return redirect(url_for('dashboard'), pubblicate=pubblicate)  
-
-
-@app.route('/proposte_pubblicate_all', methods=['GET'])  
-@login_required
-def lista_proposte_pubblicate():
-    """Mostra tutte le proposte pubblicate per i viaggiatori."""
-    if current_user.tipo_utente != 0:
-        flash("Accesso negato: questa sezione è riservata ai viaggiatori.", "danger")
-        return redirect(url_for('home'))
-    proposte = proposte_viaggio_dao.get_proposte_pubblicate()
-    prenotazioni = prenotazioni_dao.get_prenotazioni_by_viaggiatore(current_user.id)    # Passiamo anche le prenotazioni
-
-    return redirect(url_for('dashboard'), proposte=proposte, prenotazioni=prenotazioni)
+def converti_budget(valore):
+    """Converte una voce di budget del form: None se vuota, altrimenti un numero tra 0 e MAX_BUDGET arrotondato a 2 decimali.
+    Solleva ValueError se il valore non è valido."""
+    if not valore:
+        return None
+    numero = float(valore)                  # ValueError se non è un numero (es. "abc")
+    if not 0 <= numero <= MAX_BUDGET:       # Esclude anche i negativi, "nan" e "inf"
+        raise ValueError("Budget fuori intervallo")
+    return round(numero, 2)                 # "round" arrotonda il valore a 2 decimali
 
 
 
@@ -252,9 +227,12 @@ def nuova_proposta():
         return redirect(url_for('dashboard'))
 
     # Conversione dei campi numerici opzionali
-    dati_proposta['budget_trasporto'] = round(float(dati_proposta['budget_trasporto']), 2) if dati_proposta.get('budget_trasporto') else None   # "round" arrotonda il valore a 2 decimali
-    dati_proposta['budget_alloggio'] = round(float(dati_proposta['budget_alloggio']), 2) if dati_proposta.get('budget_alloggio') else None
-    dati_proposta['budget_attivita'] = round(float(dati_proposta['budget_attivita']), 2) if dati_proposta.get('budget_attivita') else None
+    try:
+        for campo in ("budget_trasporto", "budget_alloggio", "budget_attivita"):
+            dati_proposta[campo] = converti_budget(dati_proposta.get(campo))
+    except ValueError:
+        flash("Errore: Ogni voce di budget deve essere un numero tra 0 e 100.000.000.", "danger")
+        return redirect(url_for('dashboard'))
 
 
     # Controllo sulla lunghezza della descrizione
@@ -304,14 +282,57 @@ def modifica_proposta(id_proposta):
         flash("Errore: La proposta è già pubblicata e non può essere modificata.", "danger")
         return redirect(url_for('dashboard'))
     
-    # Gestione immagine proposta
     dati_proposta = request.form.to_dict()
+
+    # Controllo che i campi essenziali non siano vuoti (prima di tutti gli altri controlli che li usano)
+    campi_obbligatori = ["destinazione", "data_inizio", "data_fine", "descrizione", "num_massimo"]
+    for campo in campi_obbligatori:
+        if not dati_proposta.get(campo):
+            flash(f"Errore: il campo '{campo}' è obbligatorio.", "danger")
+            return redirect(url_for('dashboard'))
+
+    # Controllo sulla lunghezza della descrizione
+    if len(dati_proposta['descrizione']) > 1000:
+        flash("Errore: La descrizione non può superare i 1000 caratteri.", "danger")
+        return redirect(url_for('dashboard'))
+
+    # Controllo validità delle date
+    try:
+        data_inizio = datetime.datetime.strptime(dati_proposta['data_inizio'], "%Y-%m-%d").date()
+        data_fine = datetime.datetime.strptime(dati_proposta['data_fine'], "%Y-%m-%d").date()
+
+        if data_fine < data_inizio:
+            flash("Errore: la data di fine deve essere successiva alla data di inizio.", "danger")
+            return redirect(url_for('dashboard'))
+    except ValueError:
+        flash("Errore: formato data non valido.", "danger")
+        return redirect(url_for('dashboard'))
+
+    # Controllo validità di num_massimo
+    try:
+        dati_proposta['num_massimo'] = int(dati_proposta['num_massimo'])
+        if dati_proposta['num_massimo'] <= 0:
+            flash("Errore: Il numero massimo di partecipanti deve essere maggiore di zero.", "danger")
+            return redirect(url_for('dashboard'))
+    except ValueError:
+        flash("Errore: Il numero massimo di partecipanti deve essere un numero intero.", "danger")
+        return redirect(url_for('dashboard'))
+
+    # Conversione dei campi numerici opzionali
+    try:
+        for campo in ("budget_trasporto", "budget_alloggio", "budget_attivita"):
+            dati_proposta[campo] = converti_budget(dati_proposta.get(campo))
+    except ValueError:
+        flash("Errore: Ogni voce di budget deve essere un numero tra 0 e 100.000.000.", "danger")
+        return redirect(url_for('dashboard'))
+
+    # Gestione immagine proposta: elaborata solo dopo tutti i controlli, così un form non valido non lascia file inutilizzati sul disco
     nuova_immagine = request.files.get('immagine_proposta')  # Prendiamo direttamente il file
 
     # Se non viene caricata una nuova immagine, passiamo None
     immagine = None
-    if nuova_immagine and nuova_immagine.filename.strip():  
-        if not allowed_file(nuova_immagine.filename):  
+    if nuova_immagine and nuova_immagine.filename.strip():
+        if not allowed_file(nuova_immagine.filename):
             flash("Formato immagine non supportato. Usa solo PNG, JPG o JPEG.", "danger")
             return redirect(url_for('dashboard'))
         try:
@@ -319,48 +340,6 @@ def modifica_proposta(id_proposta):
         except ERRORI_IMMAGINE:
             flash("Errore: Immagine non valida o troppo grande.", "danger")
             return redirect(url_for('dashboard'))
-
-
-    # Controllo sulla lunghezza della descrizione
-    if len(dati_proposta['descrizione']) > 1000:
-        flash("Errore: La descrizione non può superare i 1000 caratteri.", "danger")
-        return redirect(url_for('dashboard'))
-        
-
-    # Controllo che i campi essenziali non siano vuoti
-    campi_obbligatori = ["destinazione", "data_inizio", "data_fine", "descrizione", "num_massimo"]
-    for campo in campi_obbligatori:
-        if not dati_proposta.get(campo):
-            flash(f"Errore: il campo '{campo}' è obbligatorio.", "danger")
-            return redirect(url_for('dashboard'))
-
-        # Controllo validità delle date
-        try:
-            data_inizio = datetime.datetime.strptime(dati_proposta['data_inizio'], "%Y-%m-%d").date()
-            data_fine = datetime.datetime.strptime(dati_proposta['data_fine'], "%Y-%m-%d").date()
-
-            if data_fine < data_inizio:
-                flash("Errore: la data di fine deve essere successiva alla data di inizio.", "danger")
-                return redirect(url_for('dashboard'))
-        except ValueError:
-            flash("Errore: formato data non valido.", "danger")
-            return redirect(url_for('dashboard'))
-
-        # Controllo validità di num_massimo
-        try:
-            dati_proposta['num_massimo'] = int(dati_proposta['num_massimo'])
-            if dati_proposta['num_massimo'] <= 0:
-                flash("Errore: Il numero massimo di partecipanti deve essere maggiore di zero.", "danger")
-                return redirect(url_for('dashboard'))
-        except ValueError:
-            flash("Errore: Il numero massimo di partecipanti deve essere un numero intero.", "danger")
-            return redirect(url_for('dashboard'))
-
-    # Conversione dei campi numerici opzionali
-    # Conversione dei campi numerici opzionali
-    dati_proposta['budget_trasporto'] = round(float(dati_proposta['budget_trasporto']), 2) if dati_proposta.get('budget_trasporto') else None
-    dati_proposta['budget_alloggio'] = round(float(dati_proposta['budget_alloggio']), 2) if dati_proposta.get('budget_alloggio') else None
-    dati_proposta['budget_attivita'] = round(float(dati_proposta['budget_attivita']), 2) if dati_proposta.get('budget_attivita') else None
 
     success = proposte_viaggio_dao.update_proposta(id_proposta, dati_proposta, immagine)
 
@@ -482,12 +461,13 @@ def aggiungi_domanda(id_proposta):
         flash("Errore: Il testo della domanda non può essere vuoto.", "danger")
         return redirect(url_for('proposta', id_proposta=id_proposta)) 
 
-    success = domande_risposte_dao.add_domanda(current_user.id, id_proposta, testo_domanda)
+    # Il DAO restituisce una coppia (esito, messaggio): va separata, altrimenti la tupla risulta sempre "vera"
+    success, message = domande_risposte_dao.add_domanda(current_user.id, id_proposta, testo_domanda)
 
     if success:
         flash("Domanda inviata con successo!", "success")
     else:
-        flash("Errore nell'invio della domanda.", "danger")
+        flash(message, "danger")
 
     return redirect(url_for('proposta', id_proposta=id_proposta))
 
@@ -521,12 +501,13 @@ def rispondi_domanda(id_domanda):
         flash("Errore: Il testo della risposta non può essere vuoto.", "danger")
         return redirect(url_for('proposta', id_proposta=id_proposta))
 
-    success = domande_risposte_dao.rispondi_domanda(id_domanda, testo_risposta)
+    # Il DAO restituisce una coppia (esito, messaggio): va separata, altrimenti la tupla risulta sempre "vera"
+    success, message = domande_risposte_dao.rispondi_domanda(id_domanda, testo_risposta)
 
     if success:
         flash("Risposta inviata con successo!", "success")
     else:
-        flash("Errore nell'invio della risposta.", "danger")
+        flash(message, "danger")
 
     return redirect(url_for('proposta', id_proposta=id_proposta))  # Reindirizza alla pagina della proposta con le domande
 

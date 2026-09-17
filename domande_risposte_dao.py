@@ -63,8 +63,9 @@ def add_domanda(id_viaggiatore, id_proposta, testo_domanda):
         conn.commit()
         success = True
     except Exception as e:
+        print('Errore:', str(e))    # Il dettaglio dell'eccezione resta nel log del server e non viene mostrato all'utente
         conn.rollback()
-        return False, f"Errore nell'inserimento della domanda: {str(e)}"
+        return False, "Errore nell'inserimento della domanda, riprova."
 
     cursor.close()
     conn.close()
@@ -95,8 +96,9 @@ def rispondi_domanda(id_domanda, testo_risposta):
         conn.commit()
         success = True
     except Exception as e:
+        print('Errore:', str(e))    # Il dettaglio dell'eccezione resta nel log del server e non viene mostrato all'utente
         conn.rollback()
-        return False, f"Errore nell'inserimento della risposta: {str(e)}"
+        return False, "Errore nell'inserimento della risposta, riprova."
 
     cursor.close()
     conn.close()

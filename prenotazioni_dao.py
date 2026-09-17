@@ -152,8 +152,9 @@ def add_prenotazione(id_viaggiatore, id_proposta):
         conn.commit()
         success = True
     except Exception as e:
+        print('Errore:', str(e))    # Il dettaglio dell'eccezione resta nel log del server e non viene mostrato all'utente
         conn.rollback()
-        return False, f"Errore nella prenotazione: {str(e)}"
+        return False, "Errore nella prenotazione, riprova."
 
     cursor.close()
     conn.close()
