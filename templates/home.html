@@ -131,7 +131,7 @@
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <div class="mb-3">
                                 <label class="form-label">Username</label>
-                                <input type="text" name="username" class="form-control" required maxlength="100">  <!-- "maxlength" per limitare il numero di caratteri per possibile SQL injection -->
+                                <input type="text" name="username" class="form-control" required maxlength="100">  <!-- "maxlength" limita i caratteri solo nel browser: il limite è ricontrollato dal server e la SQL injection è evitata dalle query parametrizzate -->
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Password</label>

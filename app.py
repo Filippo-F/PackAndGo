@@ -235,6 +235,11 @@ def nuova_proposta():
         return redirect(url_for('dashboard'))
 
 
+    # Controllo sulla lunghezza della destinazione (stesso limite del form)
+    if len(dati_proposta['destinazione']) > 100:
+        flash("Errore: La destinazione non può superare i 100 caratteri.", "danger")
+        return redirect(url_for('dashboard'))
+
     # Controllo sulla lunghezza della descrizione
     if len(dati_proposta['descrizione']) > 1000:
         flash("Errore: La descrizione non può superare i 1000 caratteri.", "danger")  # Come da specifiche
@@ -290,6 +295,11 @@ def modifica_proposta(id_proposta):
         if not dati_proposta.get(campo):
             flash(f"Errore: il campo '{campo}' è obbligatorio.", "danger")
             return redirect(url_for('dashboard'))
+
+    # Controllo sulla lunghezza della destinazione (stesso limite del form)
+    if len(dati_proposta['destinazione']) > 100:
+        flash("Errore: La destinazione non può superare i 100 caratteri.", "danger")
+        return redirect(url_for('dashboard'))
 
     # Controllo sulla lunghezza della descrizione
     if len(dati_proposta['descrizione']) > 1000:
@@ -588,13 +598,30 @@ def register():
     """Gestisce la registrazione degli utenti."""
     user_data = request.form.to_dict()    # Ottiene i dati inviati dal form di registrazione
 
+    # Controlli lato server: "required" e "maxlength" del form HTML si aggirano facilmente con una richiesta HTTP modificata
+    if not user_data.get('username', '').strip() or len(user_data['username']) > 100:
+        flash("Errore: L'username è obbligatorio e può avere al massimo 100 caratteri.", "danger")
+        return redirect(url_for('home'))
+
+    if not user_data.get('password') or len(user_data['password']) > 10000:
+        flash("Errore: La password è obbligatoria e può avere al massimo 10000 caratteri.", "danger")
+        return redirect(url_for('home'))
+
+    if len(user_data.get('nome', '')) > 1000:
+        flash("Errore: Il nome può avere al massimo 1000 caratteri.", "danger")
+        return redirect(url_for('home'))
+
+    if user_data.get('tipo_utente') not in ('0', '1'):     # 0 = Viaggiatore, 1 = Coordinatore
+        flash("Errore: Tipo di utente non valido.", "danger")
+        return redirect(url_for('home'))
+
     # Controlliamo se l'username esiste già
     if utenti_dao.get_user_by_username(user_data['username']):
         flash('Questo username è già in uso. Scegline un altro.', 'danger') 
         return redirect(url_for('home'))    # Se l'username esiste già, reindirizziamo l'utente alla home
 
     # Verifica che le password coincidano
-    if user_data['password'] != user_data['password_confirm']:
+    if user_data['password'] != user_data.get('password_confirm'):
         flash("Le password non coincidono, riprova.", "danger")
         return redirect(url_for('home'))
     
@@ -641,10 +668,10 @@ def login():
     user_data = request.form.to_dict()
 
     # Recuperiamo l'utente dal database
-    db_user = utenti_dao.get_user_by_username(user_data['username'])
+    db_user = utenti_dao.get_user_by_username(user_data.get('username', ''))    # .get() evita un errore 500 se il campo manca
 
     # Verifica credenziali
-    if not db_user or not check_password_hash(db_user['password'], user_data['password']):  # Gestiamo il caso in cui l'utente non esiste o se coppia "utente-password" non corrisponde
+    if not db_user or not check_password_hash(db_user['password'], user_data.get('password', '')):  # Gestiamo il caso in cui l'utente non esiste o se coppia "utente-password" non corrisponde
         flash('Credenziali non valide, riprova', 'danger')
         return redirect(url_for('home'))   
 
