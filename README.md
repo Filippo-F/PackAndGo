@@ -159,7 +159,7 @@ Photos are from [Unsplash](https://unsplash.com); see [CREDITS.md](CREDITS.md) f
 
 ## Author
 
-**Filippo Ferrari** · [LinkedIn](https://www.linkedin.com/in/filippo-ferrari-9135933b4/)
+**Filippo Ferrari** · [LinkedIn](https://www.linkedin.com/in/ferrari-f)
 
 ## License
 
