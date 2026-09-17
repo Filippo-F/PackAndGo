@@ -1,4 +1,5 @@
 # Pack&Go
+![pip-audit](https://github.com/Filippo-F/PackAndGo/actions/workflows/pip-audit.yml/badge.svg)
 
 Pack&Go is a web application for organizing group trips. **Coordinators** create, edit and publish trip proposals and answer travelers' questions; **travelers** browse published trips, book a seat and ask questions.
 
