@@ -84,11 +84,19 @@ def add_prenotazione(id_viaggiatore, id_proposta):
     cursor = conn.cursor()
 
     # Controllo: Il viaggio esiste?
-    cursor.execute("SELECT data_inizio, data_fine, num_massimo FROM proposte_viaggio WHERE id = ?", (id_proposta,))
+    cursor.execute("SELECT data_inizio, data_fine, num_massimo, stato FROM proposte_viaggio WHERE id = ?", (id_proposta,))
     proposta = cursor.fetchone()
     if not proposta:
         return False, "Errore: Il viaggio non esiste."
-    
+
+    # Controllo: Il viaggio è pubblicato? Le bozze (stato = 0) non sono prenotabili
+    if proposta["stato"] != 1:
+        return False, "Errore: Il viaggio non esiste."
+
+    # Controllo: Il viaggio deve ancora iniziare? Stesso criterio usato per mostrare le proposte ai viaggiatori
+    if proposta["data_inizio"] <= datetime.date.today().isoformat():    # Le date "anno-mese-giorno" si possono confrontare come stringhe
+        return False, "Errore: Non è più possibile prenotare questo viaggio."
+
     cursor.close()
     cursor = conn.cursor()
 

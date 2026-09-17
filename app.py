@@ -451,6 +451,12 @@ def aggiungi_domanda(id_proposta):
         flash("Accesso negato: Solo i viaggiatori possono fare domande.", "danger")
         return redirect(url_for('dashboard'))
 
+    # Si possono fare domande solo su proposte pubblicate: le bozze vengono trattate come inesistenti
+    proposta = proposte_viaggio_dao.get_proposta_by_id(id_proposta)
+    if not proposta or proposta['stato'] != 1:
+        flash("Errore: La proposta richiesta non esiste.", "danger")
+        return redirect(url_for('dashboard'))
+
     testo_domanda = request.form.get("testo_domanda")
     
     if not testo_domanda:
