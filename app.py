@@ -23,9 +23,14 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 PROFILE_IMG_SIZE = 100  # Thumbnail 100x100 px
 MAX_WIDTH = 800  # Massima larghezza immagine proposta
 MAX_HEIGHT = 600 # Massima altezza immagine proposta
+MAX_UPLOAD_MB = 10  # Dimensione massima di una richiesta con upload, oltre Flask risponde con errore 413
+MAX_IMAGE_PIXELS = 50_000_000  # Massimo 50 megapixel: evita immagini piccole su disco ma enormi una volta decompresse
+ERRORI_IMMAGINE = (OSError, ValueError, Image.DecompressionBombError)  # Errori di Pillow per file non validi o troppo grandi
 
 
 app = Flask(__name__)
+app.config['MAX_CONTENT_LENGTH'] = MAX_UPLOAD_MB * 1024 * 1024   # Limite in byte
+
 # La chiave segreta firma i cookie di sessione: va letta da variabile d'ambiente e non scritta nel codice
 app.secret_key = os.environ.get("SECRET_KEY")
 if not app.secret_key:
@@ -45,6 +50,12 @@ login_manager.login_view = "home"   # Se un utente non autenticato prova ad acce
 def csrf_error(e):
     """Gestisce le richieste POST con token CSRF mancante, scaduto o non valido."""
     flash("Richiesta non valida o sessione scaduta, riprova.", "danger")
+    return redirect(url_for('home'))
+
+@app.errorhandler(413)
+def file_troppo_grande(e):
+    """Gestisce le richieste che superano MAX_CONTENT_LENGTH."""
+    flash(f"Errore: File troppo grande, la dimensione massima è {MAX_UPLOAD_MB} MB.", "danger")
     return redirect(url_for('home'))
 
  
@@ -258,7 +269,11 @@ def nuova_proposta():
         if not allowed_file(trip_image.filename):  # Controllo formato file
             flash("Formato immagine non supportato. Usa solo PNG, JPG o JPEG.", "danger")
             return redirect(url_for('dashboard'))
-        immagine = process_trip_image(trip_image, dati_proposta['id_coordinatore'])
+        try:
+            immagine = process_trip_image(trip_image, dati_proposta['id_coordinatore'])
+        except ERRORI_IMMAGINE:
+            flash("Errore: Immagine non valida o troppo grande.", "danger")
+            return redirect(url_for('dashboard'))
     else:
         immagine = "default_travel_pic.jpg"  # Assegna l'immagine predefinita
 
@@ -299,7 +314,11 @@ def modifica_proposta(id_proposta):
         if not allowed_file(nuova_immagine.filename):  
             flash("Formato immagine non supportato. Usa solo PNG, JPG o JPEG.", "danger")
             return redirect(url_for('dashboard'))
-        immagine = process_trip_image(nuova_immagine, proposta['id_coordinatore'])
+        try:
+            immagine = process_trip_image(nuova_immagine, proposta['id_coordinatore'])
+        except ERRORI_IMMAGINE:
+            flash("Errore: Immagine non valida o troppo grande.", "danger")
+            return redirect(url_for('dashboard'))
 
 
     # Controllo sulla lunghezza della descrizione
@@ -526,13 +545,22 @@ def allowed_file(filename):
     return ext in ALLOWED_EXTENSIONS     # Controlla se l'estensione è in "ALLOWED EXTENSIONS"
 
 
-def process_profile_image(usr_image, username):
+def controlla_dimensioni(img):
+    """Blocca le immagini con troppi pixel prima di decomprimerle (Image.open legge solo l'intestazione del file)."""
+    if img.width * img.height > MAX_IMAGE_PIXELS:
+        raise ValueError("Immagine troppo grande")
+
+
+def process_profile_image(usr_image):
     """Ridimensiona, ritaglia e salva l'immagine profilo."""
     if usr_image and allowed_file(usr_image.filename):              # Se è stata caricata un'immagine e ha un'estensione valida 
-        filename = secure_filename(username.lower() + ".jpg")       # Salvato sempre come .jpg e usa secure_filename per evitare attacchi su file system di un server vulnerabile con attacchi di path traversal
+        # Nome casuale generato dal server e salvato sempre come .jpg: non dipende dall'username, così un utente
+        # non può sovrascrivere la foto di un altro (es. "caramel" vs "Caramel") o l'immagine di default
+        filename = f"profilo_{secrets.token_hex(8)}.jpg"
         image_path = f"{UPLOAD_FOLDER}{PROFILE_FOLDER}{filename}"  
 
         with Image.open(usr_image) as img:
+            controlla_dimensioni(img)
             img = img.convert("RGB")  # Converte in RGB per salvare come JPG, nel caso in cui l'immagine sia PNG con sfondo trasparente potrebbe dare errori
             width, height = img.size  # Ottiene le dimensioni dell'immagine
 
@@ -560,6 +588,7 @@ def process_trip_image(image, id_coordinatore):
         image_path = f"{UPLOAD_FOLDER}{TRIP_FOLDER}{filename}"
 
         with Image.open(image) as img:
+            controlla_dimensioni(img)
             img = img.convert("RGB")  
             img.thumbnail((MAX_WIDTH, MAX_HEIGHT), Image.Resampling.LANCZOS)  # Ridimensiona
             img.save(image_path, format="JPEG", quality=85)  # Salva l'immagine con compressione (qualità 85)
@@ -607,7 +636,11 @@ def register():
         if not allowed_file(usr_image.filename):  # Controlla se l'estensione è valida
             flash("Formato immagine non supportato. Usa solo PNG, JPG o JPEG.", "danger")
             return redirect(url_for('home'))
-        user_data['immagine_profilo'] = process_profile_image(usr_image, user_data['username'])
+        try:
+            user_data['immagine_profilo'] = process_profile_image(usr_image)
+        except ERRORI_IMMAGINE:
+            flash("Errore: Immagine non valida o troppo grande.", "danger")
+            return redirect(url_for('home'))
     else:
         user_data['immagine_profilo'] = "default_pro_pic.jpg"  # Assegniamo l'immagine predefinita se l'utente non ha caricato un'immagine
 
