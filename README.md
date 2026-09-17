@@ -6,12 +6,16 @@ It was my exam project for *Introduzione alle Applicazioni Web* (Introduction to
 
 Pack&Go is a fictional service: the contact details shown in the app are placeholders. The user interface and code comments are in Italian.
 
-<!-- Screenshots: save the images in docs/screenshots/ and remove the comment markers
-![Home page](docs/screenshots/home.png)
-![Traveler dashboard](docs/screenshots/traveler-dashboard.png)
-![Coordinator dashboard](docs/screenshots/coordinator-dashboard.png)
-![Trip details](docs/screenshots/trip-details.png)
--->
+*Click any screenshot to open it at full size.*
+
+[![Home page](docs/screenshots/home.jpg)](docs/screenshots/home.jpg)
+
+| [![Traveler dashboard](docs/screenshots/traveler-dashboard.jpg)](docs/screenshots/traveler-dashboard.jpg) | [![Coordinator dashboard](docs/screenshots/coordinator-dashboard.jpg)](docs/screenshots/coordinator-dashboard.jpg) |
+|---|---|
+| *Traveler dashboard: published upcoming trips* | *Coordinator dashboard: drafts* |
+
+[![Trip details](docs/screenshots/trip-details.jpg)](docs/screenshots/trip-details.jpg)
+*Trip details: questions, answers and participants*
 
 ## Features
 
