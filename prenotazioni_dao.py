@@ -4,9 +4,11 @@ Permette ai viaggiatori di prenotarsi ai viaggi, rispettando le regole di dispon
 """
 
 import sqlite3
+import os
 import datetime
 
-DB_PATH = "db/PackandGo.db"
+# Percorso assoluto del database: così l'app funziona anche se avviata da un'altra cartella (es. sul server di produzione)
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "db", "PackandGo.db")
 
 
 def get_prenotazioni_by_viaggiatore(id_viaggiatore):

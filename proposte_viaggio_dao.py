@@ -8,7 +8,9 @@ import datetime
 import os           # Per gestire i file
 
 
-DB_PATH = "db/PackandGo.db"
+# Percorso assoluto del database: così l'app funziona anche se avviata da un'altra cartella (es. sul server di produzione)
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "db", "PackandGo.db")
+CARTELLA_IMMAGINI = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "uploads", "proposte")   # Anche qui percorso assoluto
 
 
 def get_bozze_by_coordinatore(id_coordinatore):
@@ -139,7 +141,7 @@ def update_proposta(id_proposta, dati_modificati, nuova_immagine):
 
     # Se l'immagine cambia, eliminiamo la vecchia se non è la default
     if nuova_immagine and proposta['immagine'] and proposta['immagine'] != "default_travel_pic.jpg":
-        percorso_immagine = os.path.join("static/uploads/proposte/", proposta['immagine'])
+        percorso_immagine = os.path.join(CARTELLA_IMMAGINI, proposta['immagine'])
         if os.path.exists(percorso_immagine):
             os.remove(percorso_immagine)
 
@@ -208,7 +210,7 @@ def delete_proposta(id_proposta):
 
         # Se la proposta aveva un'immagine diversa da quella di default, la eliminiamo
         if immagine and immagine != "default_travel_pic.jpg":
-            percorso_immagine = os.path.join("static/uploads/proposte/", immagine)
+            percorso_immagine = os.path.join(CARTELLA_IMMAGINI, immagine)
             if os.path.exists(percorso_immagine):
                 os.remove(percorso_immagine)
                 

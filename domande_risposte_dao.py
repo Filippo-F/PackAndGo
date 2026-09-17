@@ -4,9 +4,11 @@ Permette ai viaggiatori di fare domande e ai coordinatori di rispondere.
 """
 
 import sqlite3
+import os
 import datetime
 
-DB_PATH = "db/PackandGo.db"
+# Percorso assoluto del database: così l'app funziona anche se avviata da un'altra cartella (es. sul server di produzione)
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "db", "PackandGo.db")
 
 
 def get_domande_by_proposta(id_proposta):

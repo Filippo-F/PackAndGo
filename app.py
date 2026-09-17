@@ -17,9 +17,9 @@ from PIL import Image   # Pillow - Python Imaging Library used to pre-process i
 import utenti_dao, proposte_viaggio_dao, prenotazioni_dao, domande_risposte_dao
 from models import User
 
-UPLOAD_FOLDER = "static/uploads/"
-PROFILE_FOLDER = "profili/"         # Sottocartella per le immagini profilo
-TRIP_FOLDER = "proposte/"  # Sottocartella per le immagini delle proposte
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "uploads")   # Percorso assoluto: il salvataggio delle immagini non dipende dalla cartella di avvio
+PROFILE_FOLDER = "profili"         # Sottocartella per le immagini profilo
+TRIP_FOLDER = "proposte"  # Sottocartella per le immagini delle proposte
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 PROFILE_IMG_SIZE = 100  # Thumbnail 100x100 px
 MAX_WIDTH = 1200  # Massima larghezza immagine proposta (nitida anche su schermi ad alta densità)
@@ -612,7 +612,7 @@ def process_profile_image(usr_image):
         # Nome casuale generato dal server e salvato sempre come .jpg: non dipende dall'username, così un utente
         # non può sovrascrivere la foto di un altro (es. "caramel" vs "Caramel") o l'immagine di default
         filename = f"profilo_{secrets.token_hex(8)}.jpg"
-        image_path = f"{UPLOAD_FOLDER}{PROFILE_FOLDER}{filename}"  
+        image_path = os.path.join(UPLOAD_FOLDER, PROFILE_FOLDER, filename)
 
         with Image.open(usr_image) as img:
             controlla_dimensioni(img)
@@ -640,7 +640,7 @@ def process_trip_image(image, id_coordinatore):
     if image and allowed_file(image.filename):
         timestamp = int(time.time())  # Otteniamo il timestamp attuale
         filename = secure_filename(f"trip_{timestamp}_{id_coordinatore}.jpg")  # Nome sicuro e univoco grazie al timestamp e usiamo id_coordinatore per facilitare successivamente l'inserimento del viaggio
-        image_path = f"{UPLOAD_FOLDER}{TRIP_FOLDER}{filename}"
+        image_path = os.path.join(UPLOAD_FOLDER, TRIP_FOLDER, filename)
 
         with Image.open(image) as img:
             controlla_dimensioni(img)
