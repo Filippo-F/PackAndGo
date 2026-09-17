@@ -1,0 +1,14 @@
+Target app: Desktop
+
+
+Indirizzo pubblico: https://pips.pythonanywhere.com 
+
+
+Librerie necessarie per il sito web:
+
+Flask
+Flask-Login
+Flask-Session
+Pillow
+Werkzeug
+

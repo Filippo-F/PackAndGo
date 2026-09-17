@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Dettaglio Proposta{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <!-- Pulsante per tornare alla lista delle proposte -->
+    <div class="mb-3">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Torna alla lista delle proposte
+        </a>
+    </div>
+    
+    <!-- Card Proposta -->
+    <div class="card shadow-lg border-0 rounded">
+        <div class="card-body p-4">
+        
+            <div class="row">
+                <!-- Immagine della Proposta -->
+                <div class="col-md-7 d-flex align-items-stretch">
+                    <img src="{{ url_for('static', filename='uploads/proposte/' ~ (proposta.immagine or 'default_travel_pic.jpg')) }}" 
+                         alt="Immagine Proposta" class="img-fluid rounded shadow-sm w-100 h-100 object-fit-cover">
+                </div>
+
+                <!-- Dettagli della Proposta -->
+                <div class="col-md-5">
+                    <h2 class="fw-bold text-center mb-3">{{ proposta.destinazione }}</h2>
+                    <p><strong>Dal:</strong> {{ proposta.data_inizio }} <strong>Al:</strong> {{ proposta.data_fine }}</p>
+                    <p><strong>Numero massimo di partecipanti:</strong> {{ proposta.num_massimo }}</p>
+                    <br>
+                    <div class="row text-center">
+                        <div class="col-md-4"><strong>Trasporto:</strong> €{{ "%.2f"|format(proposta.budget_trasporto or 0) }}</div>
+                        <div class="col-md-4"><strong>Alloggio:</strong> €{{ "%.2f"|format(proposta.budget_alloggio or 0) }}</div>
+                        <div class="col-md-4"><strong>Attività:</strong> €{{ "%.2f"|format(proposta.budget_attivita or 0) }}</div>
+                    </div>
+                    <br>
+                    <h4 class="text-center fw-bold mt-3">Prezzo Totale: €{{ "%.2f"|format((proposta.budget_trasporto or 0) + (proposta.budget_alloggio or 0) + (proposta.budget_attivita or 0)) }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <hr class="my-4">
+
+    <!-- Descrizione -->
+    <div class="mt-4">                        <!-- Padding orizzontale per la descrizione -->
+        <h4 class="fw-bold">Descrizione</h4>
+        <p>{{ proposta.descrizione }}</p>
+    </div>
+
+    <hr class="my-4">
+    
+
+    <div class="row mt-4">
+        <!-- Sezione Domande e Risposte -->
+        <div class="col-md-8">
+            <h4>Domande e Risposte</h4>
+
+            {% if current_user.tipo_utente == 0 %}
+                <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#confirmQuestionModal">
+                    <i class="bi bi-chat-dots"></i> Fai una Domanda
+                </button>
+            {% endif %}
+
+            <div class="mt-3">
+                {% for domanda in domande %}
+                    <div class="mb-3 border p-3 rounded shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <img src="{{ url_for('static', filename='uploads/profili/' ~ (domanda.immagine_utente or 'default_pro_pic.jpg')) }}" 
+                                     alt="Immagine Utente" class="rounded-circle me-2" width="40">
+                                <strong>@{{ domanda.username_utente or 'Utente' }}</strong>
+                            </div>
+                            {% if not domanda.risposta and current_user.tipo_utente == 1 %}
+                                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#confirmAnswerModal{{ domanda.id }}">
+                                    <i class="bi bi-reply"></i> Rispondi
+                                </button>
+                            {% endif %}
+                        </div>
+                        <p class="mt-2">{{ domanda.domanda }}</p>
+                        
+                        {% if domanda.risposta %}
+                            <div class="ms-4 mt-2 border-start ps-3">
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ url_for('static', filename='uploads/profili/' ~ (domanda.immagine_coordinatore or 'default_pro_pic.jpg')) }}" 
+                                         alt="Immagine Coordinatore" class="rounded-circle me-2" width="40">
+                                    <strong>@{{ domanda.username_coordinatore or 'Coordinatore' }}</strong>
+                                </div>
+                                <p class="mt-2">{{ domanda.risposta }}</p>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Modale Conferma Risposta -->
+                    <div class="modal fade" id="confirmAnswerModal{{ domanda.id }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header bg-primary text-white">
+                                    <h5 class="modal-title">Rispondi alla Domanda</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form action="{{ url_for('rispondi_domanda', id_domanda=domanda.id) }}" method="POST">
+
+                                        <input type="hidden" name="id_proposta" value="{{ proposta.id }}">  <!-- ID Proposta passato come parametro hidden in quanto necessario per la risposta -->
+
+                                        <div class="mb-3">
+                                            <label for="testo_risposta" class="form-label">Scrivi la tua risposta:</label>
+                                            <textarea name="testo_risposta" class="form-control" required></textarea>
+                                        </div>
+                                        <div class="text-center">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                                            <button type="submit" class="btn btn-primary">Invia Risposta</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Sezione Prenotazione/Partecipanti -->
+        <div class="col-md-4 text-center">
+            {% if current_user.tipo_utente == 0 %}
+                <!-- Sezione Prenotazione per Viaggiatori -->
+                <h5 class="text-success fw-bold">Prenota ora!</h5>
+                <p class="mb-1">Posti disponibili: <strong>{{ posti_disponibili if posti_disponibili is not none else 'N/A' }}</strong></p>
+                {% if prenotato %}
+                    <button class="btn btn-secondary w-100" disabled>Già prenotato</button>     <!-- Pulsante disabilitato se già prenotato -->
+                {% elif posti_disponibili > 0 %}
+                    <button class="btn btn-success w-100" data-bs-toggle="modal" data-bs-target="#confirmBookingModal">
+                        Prenota                                    <!-- Pulsante attivo se ci sono posti disponibili -->
+                    </button>
+                {% else %}
+                    <button class="btn btn-secondary w-100" disabled>Non disponibile</button>   <!-- Pulsante disabilitato se non ci sono posti disponibili -->
+                {% endif %}
+            {% else %}
+                <!-- Sezione Partecipanti per Coordinatori -->
+                <h4 class="text-center">Partecipanti iscritti: {{ partecipanti|length }}</h4>   <!-- "lenght" filtro Jinja per ottenere la lunghezza di una lista -->
+                <div class="border rounded shadow-sm p-3" style="max-height: 250px; overflow-y: auto;">
+                    <ul class="list-group">
+                        {% for partecipante in partecipanti %}
+                            <li class="list-group-item d-flex align-items-center">
+                                <img src="{{ url_for('static', filename='uploads/profili/' ~ (partecipante.immagine_profilo or 'default_pro_pic.jpg')) }}" 
+                                     alt="Immagine Partecipante" class="rounded-circle me-2" width="40">
+                                @{{ partecipante.username }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <hr>
+
+    <!-- Modale Conferma Domanda -->
+    <div class="modal fade" id="confirmQuestionModal" tabindex="-1">
+        <div class="modal-dialog">
+           <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Conferma Invio Domanda</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="{{ url_for('aggiungi_domanda', id_proposta=proposta.id) }}" method="POST">
+                        <div class="mb-3">
+                            <label for="testo_domanda" class="form-label">Scrivi la tua domanda:</label>
+                            <textarea name="testo_domanda" class="form-control" required></textarea>
+                        </div>
+                        <div class="text-center">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                            <button type="submit" class="btn btn-primary">Invia</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale Conferma Prenotazione -->
+    <div class="modal fade" id="confirmBookingModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">Conferma Prenotazione</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p>Sei sicuro di voler prenotare la proposta <strong>{{ proposta.destinazione }}</strong>?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                    <form action="{{ url_for('prenota_viaggio', id_proposta=proposta.id) }}" method="POST">
+                        <button type="submit" class="btn btn-success">Conferma Prenotazione</button>
+                    </form>                                    
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

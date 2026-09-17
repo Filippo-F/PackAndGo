@@ -1,0 +1,96 @@
+/*                           */
+/* Stili per il testi e font */
+/*                           */
+
+
+/* Stile del titolo del sito */
+.site-title {
+    font-family: 'Poppins', sans-serif;
+    font-size: 28px;
+    font-weight: 600;   /* Grassetto */
+}
+
+/* Stile dell'intestazione principale */
+.headline {
+    font-family: 'Raleway', sans-serif; 
+    font-size: 44px;  
+    font-weight: 700;  
+    letter-spacing: 1px;  /* Spaziatura tra le lettere */
+    color: #212529;  
+    text-align: center;   /* Centratura testo */
+}
+
+/* Stile del sottotitolo */
+.subtitle {
+    font-family: 'Raleway', sans-serif;  
+    font-size: 20px;  
+    font-weight: 400;  
+    color: #6c757d;  
+    text-align: center;
+    max-width: 600px;   /* Limitiamo la larghezza per una migliore leggibilità */
+    margin: 0 auto;     /* Centriamo il testo orizzontalmente */
+}
+
+
+/*                             */
+/* Stili generali della pagina */
+/*                             */
+
+
+/* Stile del corpo della pagina */
+body {
+    position: relative;     /* Fissa il corpo della pagina */
+    background-color:#EEEEEE;
+}
+
+
+/*                        */
+/* Stili per il carosello */
+/*                        */
+
+
+/* Contenitore del carosello */
+.carousel-container {
+    position: relative;  
+    width: 100%;
+    max-width: 900px;    
+    margin: 20px auto;      /* Centrato orizzontalmente e padding superiore */
+    overflow: hidden;       /* Nasconde le immagini che escono dal contenitore */
+    border-radius: 15px;
+}
+
+/* Immagini del carosello */
+.carousel-img {
+    height: 350px;                           /* Aumentato leggermente per una vista più ampia */
+    object-fit: cover;                       /* Adatta l'immagine mantenendo le proporzioni */
+    transition: ease-in-out;                 /* Transizione più fluida tra le immagini */
+}
+
+
+/*                              */
+/* Stili per il bottone esplora */
+/*                              */
+
+
+/* Stile del pulsante "Esplora Destinazioni" */
+.explore-destinations-btn {
+    font-family: 'Raleway', sans-serif;
+    font-size: 20px;  
+    font-weight: 600;
+    padding: 12px 28px;                              /* Spaziatura interna per un pulsante più grande */
+    border-radius: 35px;   
+    background-color: #007bff;
+    color: white;
+    border: none;                                    /* Rimuove il bordo */
+    box-shadow: 0 0 15px rgba(0, 123, 255, 0.6);   /* Glow iniziale blu */
+    transition: all 0.3s ease-in-out;                /* Transizione fluida per gli effetti hover, ease-in-out rallenta l'effetto all'inizio e alla fine */
+    display: inline-flex;                            /* Layout flessibile per centrare gli elementi interni */
+    align-items: center;                             /* Centra testo e icona verticalmente */
+    gap: 12px;                                       /* Distanza tra icona e testo */
+}
+
+/* Effetto al passaggio del mouse sul pulsante */
+.explore-destinations-btn:hover {
+    box-shadow: 0 0 25px rgba(0, 123, 255, 0.9);   /* Glow più intenso */
+    transform: scale(1.08);                          /* Effetto leggero di ingrandimento */
+}

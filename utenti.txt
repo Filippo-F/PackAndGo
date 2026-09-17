@@ -1,0 +1,14 @@
+User: Pippo   Psw: Pippo	    Coordinatore con proposta con data nel passato (pubblicata precedentemente) e con proposta con default image
+
+User: Greta   Psw: Greta    Coordinatore con proposta con posti terminati
+
+User: Gino    Psw: Gino	    Coordinatore con default pro pic
+
+
+Utenti viaggiatori:
+
+User: Caramel    Psw: Caramel
+
+User: Marisa       Psw: Marisa
+
+User: Gianni       Psw: Gianni    

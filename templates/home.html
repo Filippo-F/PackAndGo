@@ -1,0 +1,165 @@
+{% extends "base.html" %}  <!-- Estende il template base.html -->
+
+{% block title %}Benvenuto su Pack & Go{% endblock %}
+
+{% block navbar_buttons %}
+<li class="nav-item">
+    <button class="btn btn-outline-light mx-1" data-bs-toggle="modal" data-bs-target="#authModal">
+        <i class="bi bi-person-circle"></i> Accedi / Registrati
+    </button>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="container text-center mt-5">
+    <h1 class="headline text-center">Esplora il mondo con Pack & Go!</h1>
+    <p class="subtitle">Il miglior sito per viaggi di gruppo</p>
+
+    <!-- Carosello -->
+    <div class="carousel-container">
+        <div id="travelCarousel" class="carousel slide" data-bs-ride="carousel">
+            
+            <!-- Indicatori -->
+            <div class="carousel-indicators">
+                <button type="button" data-bs-target="#travelCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+                <button type="button" data-bs-target="#travelCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
+                <button type="button" data-bs-target="#travelCarousel" data-bs-slide-to="2" aria-label="Slide 3"></button>
+                <button type="button" data-bs-target="#travelCarousel" data-bs-slide-to="3" aria-label="Slide 4"></button>
+                <button type="button" data-bs-target="#travelCarousel" data-bs-slide-to="4" aria-label="Slide 5"></button>
+            </div>
+
+            <!-- Immagini del Carosello -->
+            <div class="carousel-inner">
+                <div class="carousel-item active" alt="Immagine 1 carosello">
+                    <img src="{{ url_for('static', filename='img/viaggio1.jpg') }}" class="d-block w-100 carousel-img" alt="Viaggio 1">
+                </div>
+                <div class="carousel-item" alt="Immagine 2 carosello">
+                    <img src="{{ url_for('static', filename='img/viaggio2.jpg') }}" class="d-block w-100 carousel-img" alt="Viaggio 2">
+                </div>
+                <div class="carousel-item" alt="Immagine 3 carosello">
+                    <img src="{{ url_for('static', filename='img/viaggio3.jpg') }}" class="d-block w-100 carousel-img" alt="Viaggio 3">
+                </div>
+                <div class="carousel-item" alt="Immagine 4 carosello">
+                    <img src="{{ url_for('static', filename='img/viaggio4.jpg') }}" class="d-block w-100 carousel-img" alt="Viaggio 4">
+                </div>
+                <div class="carousel-item" alt="Immagine 5 carosello">
+                    <img src="{{ url_for('static', filename='img/viaggio5.jpg') }}" class="d-block w-100 carousel-img" alt="Viaggio 5">
+                </div>
+            </div>
+
+            <!-- Controlli Precedente e Successivo -->
+            <button class="carousel-control-prev" type="button" data-bs-target="#travelCarousel" data-bs-slide="prev" aria-label="Precedente">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Precedente</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#travelCarousel" data-bs-slide="next" aria-label="Successivo">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Successivo</span>
+            </button>
+        </div>
+    </div>
+
+
+    <!-- Pulsante Accedi / Registrati -->
+    <button class="btn explore-destinations-btn mt-4" data-bs-toggle="modal" data-bs-target="#authModal">
+        Scopri le destinazioni <i class="bi bi-globe2"></i>
+    </button>
+
+    <hr class="my-5">  <!-- Linea orizzontale di margine verticale 5 -->
+    
+    <h3>Perché scegliere Pack & Go?</h3>
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <h5><i class="bi bi-globe"></i> Destinazioni Esclusive</h5>
+            <p>Viaggi verso mete indimenticabili con guide esperte.</p>
+        </div>
+        <div class="col-md-4">
+            <h5><i class="bi bi-people"></i> Community di Viaggiatori</h5>
+            <p>Condividi esperienze uniche con persone che amano viaggiare come te.</p>
+        </div>
+        <div class="col-md-4">
+            <h5><i class="bi bi-calendar-check"></i> Prenotazioni Semplici</h5>
+            <p>Prenota il tuo viaggio con un click e senza pensieri.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Modale Autenticazione -->
+<div class="modal fade {% if active_tab %}show d-block{% endif %}" id="authModal" tabindex="-1">  <!-- "show d-block" per mostrare la modale -->
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white text-center">
+                <h5 class="modal-title w-100">Il tuo viaggio inizia qui!</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <p>Accedi per prenotare o registrati per entrare nella community!</p>
+                </div>
+                
+                <!-- Tabs per Login e Registrazione indica quale tab è attiva -->
+                <ul class="nav nav-tabs nav-justified">  <!-- "nav-justified" per allineare le tab al centro -->
+                    <li class="nav-item">
+                        <a class="nav-link {% if active_tab == 'login' or not active_tab %}active{% endif %}" id="login-tab" data-bs-toggle="tab" href="#login">Accedi</a>   <!-- "not active_tab" per mostrare la tab "Accedi" di default -->
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if active_tab == 'register' %}active{% endif %}" id="register-tab" data-bs-toggle="tab" href="#register">Registrati</a>
+                    </li>
+                </ul>
+
+                <!-- Contenuto Tab -->
+                <div class="tab-content mt-3">
+                    <!-- Tab Login -->
+                    <div class="tab-pane fade {% if active_tab == 'login' or not active_tab %}show active{% endif %}" id="login">  <!-- "tab-pane" per mostrare il contenuto della tab -->
+                        <form action="{{ url_for('login') }}" method="POST">
+                            <div class="mb-3">
+                                <label class="form-label">Username</label>
+                                <input type="text" name="username" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Password</label>
+                                <input type="password" name="password" class="form-control" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Accedi</button>
+                        </form>
+                    </div>
+
+                    <!-- Tab Registrazione -->
+                    <div class="tab-pane fade {% if active_tab == 'register' %}show active{% endif %}" id="register">
+                        <form action="{{ url_for('register') }}" method="POST" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label class="form-label">Username</label>
+                                <input type="text" name="username" class="form-control" required maxlength="100">  <!-- "maxlength" per limitare il numero di caratteri per possibile SQL injection -->
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Password</label>
+                                <input type="password" name="password" class="form-control" maxlength="10000" required>   <!-- "maxlength" per limitare il numero di caratteri -->
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Conferma Password</label>
+                                <input type="password" name="password_confirm" class="form-control" maxlength="10000" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Registrati come:</label>
+                                <select name="tipo_utente" class="form-select" required>
+                                    <option value="0">Viaggiatore</option>
+                                    <option value="1">Coordinatore</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Nome <small>(Obbligatorio per Coordinatori)</small></label>
+                                <input type="text" name="nome" class="form-control" maxlength="1000">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Immagine Profilo <small>(Solo PNG, JPG o JPEG)</small></label>
+                                <input type="file" name="immagine_profilo" class="form-control" accept=".png, .jpg, .jpeg">
+                            </div>
+                            <button type="submit" class="btn btn-success w-100">Registrati</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

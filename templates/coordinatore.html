@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Coordinatore{% endblock %}
+
+{% block navbar_buttons %}
+<li class="nav-item">
+    <a href="{{ url_for('logout') }}" class="btn btn-outline-light mx-2">
+        <i class="bi bi-box-arrow-right"></i> Logout
+    </a>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <!-- Sezione Benvenuto e Immagine Profilo -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="text-start">Bentornato/a, {{ current_user.nome }}!</h2>
+        </div>
+        <div class="text-center">
+            <img src="{{ url_for('static', filename='uploads/profili/' ~ (current_user.immagine_profilo or 'default_pro_pic.jpg')) }}" 
+                alt="Immagine Profilo" class="img-fluid rounded-circle" width="80">
+
+            <p class="text-muted mt-2">@{{ current_user.username }}</p>  <!-- "text-muted" per rendere il testo grigio -->
+        </div>
+    </div>
+</div>
+    
+<!-- Bottone Centrale per Creare una Nuova Proposta -->
+<div class="text-center mb-4">
+    <button type="button" class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#aggiungiPropostaModal">
+        <i class="bi bi-plus-circle"></i> Pubblica una Proposta
+    </button>
+</div>
+
+<!-- Modale Aggiunta Proposta -->
+<div class="modal fade" id="aggiungiPropostaModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title">Nuova Proposta</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ url_for('nuova_proposta') }}" method="POST" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label">Destinazione</label>
+                        <input type="text" name="destinazione" class="form-control" maxlength="100" required>
+                    </div>  
+                    <div class="row">
+                        <div class="col-md-6 mb-3">     <!--md usato per schermi medi -->
+                            <label class="form-label">Data Inizio</label>
+                            <input type="date" name="data_inizio" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Data Fine</label>
+                            <input type="date" name="data_fine" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Numero massimo di partecipanti</label>
+                        <input type="number" name="num_massimo" class="form-control" max = "10000" min = "0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descrizione</label>
+                        <textarea name="descrizione" class="form-control" maxlength="1000" required></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Budget Trasporto (€)</label>
+                            <input type="number" step="0.01" name="budget_trasporto" class="form-control" max="100000000.00" min="0.00" >
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Budget Alloggio (€)</label>
+                            <input type="number" step="0.01" name="budget_alloggio" class="form-control" max="100000000.00" min="0.00">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Budget Attività (€)</label>
+                            <input type="number" step="0.01" name="budget_attivita" class="form-control" max="100000000.00" min="0.00">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Immagine della Proposta <small>(Solo PNG, JPG o JPEG)</small></label>
+                        <input type="file" name="immagine_proposta" class="form-control" accept=".png, .jpg, .jpeg">
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">Aggiungi Proposta</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Sezione delle Proposte di Viaggio -->
+<h3>Le mie proposte di viaggio</h3>
+<ul class="nav nav-tabs" id="proposteTabs">
+    <li class="nav-item">
+        <a class="nav-link active" id="bozze-tab" data-bs-toggle="tab" href="#bozze">Bozze</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" id="pubblicate-tab" data-bs-toggle="tab" href="#pubblicate">Pubblicate</a>
+    </li>
+</ul>
+
+<div class="tab-content mt-3">
+    <!-- Tab Bozze -->
+    <div class="tab-pane fade show active" id="bozze">
+        {% if bozze %}
+            <div class="container">
+                {% for proposta in bozze %}
+                    <div class="card shadow-sm mb-4">  <!-- "shadow-sm" per aggiungere ombra -->
+                        <!-- Immagine Proposta -->
+                        <img src="{{ url_for('static', filename='uploads/proposte/' ~ (proposta.immagine or 'default_travel_pic.jpg')) }}"   
+                            alt="Immagine Proposta" class="img-fluid w-100" style="max-height: 250px; object-fit: cover;">    <!-- "object-fit: cover" per adattare l'immagine al div -->
+                            <!-- "or 'default_travel_pic.jpg'" per visualizzare l'immagine di default se non è stata caricata alcuna immagine -->
+
+
+                        <div class="card-body">
+                            <h3 class="card-title">{{ proposta.destinazione }}</h3>
+                            <p class="card-text"><strong>Dal:</strong> {{ proposta.data_inizio }} <strong>Al:</strong> {{ proposta.data_fine }}</p>
+                            <p class="card-text"><strong>Partecipanti:</strong> {{ proposta.num_massimo }}</p>
+                            <p class="card-text"><strong>Descrizione:</strong> {{ proposta.descrizione }}</p>
+                        </div>
+                            
+                        <div class="row text-center">
+                            <div class="col-md-4"><strong>Trasporto:</strong> €{{ "%.2f"|format(proposta.budget_trasporto or 0) }}</div>
+                            <div class="col-md-4"><strong>Alloggio:</strong> €{{ "%.2f"|format(proposta.budget_alloggio or 0) }}</div>
+                            <div class="col-md-4"><strong>Attività:</strong> €{{ "%.2f"|format(proposta.budget_attivita or 0) }}</div>
+                        </div>
+
+                        <br>   <!-- Spazio tra i campi -->
+
+                        <!-- Pulsanti Azione -->
+                        <div class="card-footer d-flex justify-content-between">
+                            <!-- Pulsante Modifica -->
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modificaPropostaModal{{ proposta.id }}">
+                                <i class="bi bi-pencil"></i> Modifica
+                            </button>
+
+                            <!-- Pulsante Pubblica -->
+                            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#confirmPublishModal{{ proposta.id }}">
+                                <i class="bi bi-check-circle"></i> Pubblica
+                            </button>
+
+                            <!-- Pulsante Elimina -->
+                            <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal{{ proposta.id }}">
+                                <i class="bi bi-trash"></i> Elimina
+                            </button>
+                        </div>
+                    </div>
+
+                    <br>
+                    
+                    <!-- Modale Conferma Pubblicazione -->
+                    <div class="modal fade" id="confirmPublishModal{{proposta.id}}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header bg-success text-white">
+                                    <h5 class="modal-title">Conferma Pubblicazione</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body text-center">
+                                    <p>Sei sicuro di voler pubblicare questa proposta?</p>
+                                    <hr class="my-1">
+                                    <p>Ricordati che puoi pubblicare solo proposte con date future.</p>
+                                    <p> (Non scadute) </p> 
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                                    <form action="{{ url_for('conferma_pubblicazione', id_proposta=proposta.id) }}" method="POST">
+                                        <button type="submit" class="btn btn-success">Pubblica</button>
+                                    </form>                                    
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modale Conferma Eliminazione -->
+                    <div class="modal fade" id="confirmDeleteModal{{proposta.id}}" tabindex="-1">
+                       <div class="modal-dialog">
+                        <div class="modal-content">
+                                <div class="modal-header bg-danger text-white">
+                                    <h5 class="modal-title">Conferma Eliminazione</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body text-center">
+                                    <p>Sei sicuro di voler eliminare la proposta <strong>{{ proposta.destinazione }}</strong>?</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                                    <form action="{{ url_for('elimina_proposta', id_proposta=proposta.id) }}" method="POST">
+                                        <button type="submit" class="btn btn-danger">Elimina</button>
+                                    </form>                                                                    
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                        
+                    <!-- Modale Modifica Proposta -->
+                    <div class="modal fade" id="modificaPropostaModal{{proposta.id}}" tabindex="-1">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                               <div class="modal-header bg-primary text-white">
+                                   <h5 class="modal-title">Modifica Proposta</h5>
+                                   <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                               </div>
+                               <div class="modal-body">
+                                   <form action="{{ url_for('modifica_proposta', id_proposta=proposta.id) }}" method="POST" enctype="multipart/form-data">
+                                        <div class="mb-3">
+                                            <label class="form-label">Destinazione</label>
+                                            <input type="text" name="destinazione" class="form-control" value="{{ proposta.destinazione }}" maxlength="100" required>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Data Inizio</label>
+                                                <input type="date" name="data_inizio" class="form-control" value="{{ proposta.data_inizio }}" required>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Data Fine</label>
+                                                <input type="date" name="data_fine" class="form-control" value="{{ proposta.data_fine }}" required>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Numero massimo di partecipanti</label>
+                                            <input type="number" name="num_massimo" class="form-control" value="{{ proposta.num_massimo }}" max = "10000" min = "0" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Descrizione</label>
+                                            <textarea name="descrizione" class="form-control" maxlength="1000" required>{{ proposta.descrizione }}</textarea>
+                                        </div>
+                                        <div class="row">
+                                           <div class="col-md-4 mb-3">
+                                                <label class="form-label">Budget Trasporto (€)</label>
+                                               <input type="number" step="0.01" name="budget_trasporto" class="form-control" value="{{ proposta.budget_trasporto or '' }}" max="100000000.00" min="0.00">  <!-- "or ''" impone il valore di default a vuoto, in caso di mancata selezione -->
+                                           </div>
+                                           <div class="col-md-4 mb-3">
+                                                <label class="form-label">Budget Alloggio (€)</label>
+                                                <input type="number" step="0.01" name="budget_alloggio" class="form-control" value="{{ proposta.budget_alloggio or '' }}" max="100000000.00" min="0.00">
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Budget Attività (€)</label>
+                                                <input type="number" step="0.01" name="budget_attivita" class="form-control" value="{{ proposta.budget_attivita or '' }}" max="100000000.00" min="0.00">
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Immagine della Proposta <small>(Solo PNG, JPG o JPEG)</small></label>
+                                            <input type="file" name="immagine_proposta" class="form-control" accept=".png, .jpg, .jpeg">
+                                        </div>
+                                       <button type="submit" class="btn btn-primary w-100">Modifica Proposta</button>
+                                    </form>
+                               </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-muted">Nessuna bozza disponibile.</p>
+        {% endif %}
+    </div>
+
+<!-- Tab Pubblicate -->
+<div class="tab-pane fade" id="pubblicate">
+    {% if pubblicate %}
+        <div class="container">
+            {% for proposta in pubblicate %}
+                <div class="card shadow-sm mb-4">
+                    
+                    <!-- Immagine Proposta -->
+                    <img src="{{ url_for('static', filename='uploads/proposte/' ~ (proposta.immagine or 'default_travel_pic.jpg')) }}"  
+                        alt="Immagine Proposta" class="img-fluid w-100" style="max-height: 250px; object-fit: cover;">
+
+                    <div class="card-body">
+                        <!-- Destinazione -->
+                        <h3 class="card-title d-flex justify-content-between">
+                            {{ proposta.destinazione }}
+                            <span class="badge bg-success"><i class="bi bi-check-circle"></i> Pubblicata</span>
+                        </h3>
+
+                        <!-- Date e Posti -->
+                        <p class="card-text">
+                            <strong>Dal:</strong> {{ proposta.data_inizio }}  
+                            <strong>Al:</strong> {{ proposta.data_fine }}  
+                        </p>
+                        <p class="card-text"><strong>Posti disponibili:</strong> {{ proposta.num_massimo }}</p>
+
+                        <!-- Prezzo Totale -->
+                        <p class="card-text">
+                            <strong>Prezzo Totale:</strong> 
+                            €{{ "%.2f"|format((proposta.budget_trasporto or 0) + (proposta.budget_alloggio or 0) + (proposta.budget_attivita or 0)) }}
+                        </p>
+                    </div>
+
+                    <div class="card-footer text-end">
+                        <!-- Link alla proposta dettagliata -->
+                        <a href="{{ url_for('proposta', id_proposta=proposta.id) }}" class="btn btn-primary">
+                            <i class="bi bi-eye"></i> Visualizza
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-muted">Nessuna proposta pubblicata.</p>
+    {% endif %}
+</div>
+
+
+{% endblock %}

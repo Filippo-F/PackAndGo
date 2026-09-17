@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Viaggiatore{% endblock %}
+
+{% block navbar_buttons %}
+<li class="nav-item">
+    <a href="{{ url_for('logout') }}" class="btn btn-outline-light mx-2">
+        <i class="bi bi-box-arrow-right"></i> Logout
+    </a>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <!-- Sezione Benvenuto e Immagine Profilo -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="text-start fw-bold">Ciao, {{ current_user.username }}!</h2>
+        </div>
+        <div class="text-center">
+            <img src="{{ url_for('static', filename='uploads/profili/' ~ (current_user.immagine_profilo or 'default_pro_pic.jpg')) }}" 
+                 alt="Immagine Profilo" class="img-fluid rounded-circle border border-3 shadow-sm" width="90">
+        </div>
+    </div>
+
+    <!-- Testo evidenziato -->
+    <h3 class="text-center text-dark fw-bold mt-4 mb-4">Scegli la tua prossima destinazione e parti all’avventura!</h3>
+    
+    <hr class="mb-5">
+
+    <!-- Sezione delle Proposte di Viaggio -->
+    <h4 class="mt-5">Proposte di Viaggio Disponibili</h4>
+    {% if proposte %}
+        <div class="container">
+            {% for proposta in proposte %}
+            <div class="card shadow-sm mb-4">
+                <!-- Immagine del Viaggio -->
+                <img src="{{ url_for('static', filename='uploads/proposte/' ~ (proposta.immagine or 'default_travel_pic.jpg')) }}" 
+                     alt="Immagine Proposta" class="img-fluid w-100" style="max-height: 300px; object-fit: cover;">
+
+                <div class="card-body">
+                    <h3 class="card-title d-flex justify-content-between align-items-center">
+                        {{ proposta.destinazione }}
+                        {% if proposta.prenotato %}
+                        <span class="badge bg-success"><i class="bi bi-check-circle"></i> Prenotato</span>
+                        {% endif %}
+                    </h3>
+                    <p class="card-text"><strong>Dal:</strong> {{ proposta.data_inizio }} <strong>Al:</strong> {{ proposta.data_fine }}</p>
+                    <p class="card-text"><strong>Posti disponibili:</strong> {{ proposta.posti_disponibili if proposta.posti_disponibili is not none else 'N/A' }}</p>
+                    <p class="card-text"><strong>Prezzo totale:</strong> €{{ "%.2f"|format((proposta.budget_trasporto or 0) + (proposta.budget_alloggio or 0) + (proposta.budget_attivita or 0)) }}</p>
+                    <p class="card-text"><strong>Descrizione:</strong> {{ proposta.descrizione }}</p>
+
+                    <hr>
+
+                    <!-- Info Coordinatore -->
+                    <div class="d-flex align-items-center">
+                        <img src="{{ url_for('static', filename='uploads/profili/' ~ (proposta.immagine_profilo or 'default_pro_pic.jpg')) }}" 
+                             alt="Immagine Coordinatore" class="rounded-circle" width="50">
+                        <p class="ms-2"><strong>Coordinatore:</strong> @{{ proposta.coordinatore_username }}</p>
+                    </div>
+                </div>
+
+                <div class="card-footer text-end">
+                    <!-- Link alla proposta dettagliata -->
+                    <a href="{{ url_for('proposta', id_proposta=proposta.id) }}" class="btn btn-primary">
+                        <i class="bi bi-eye"></i> Visualizza
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-muted">Al momento non ci sono viaggi disponibili.</p>
+    {% endif %}
+</div>
+{% endblock %}
