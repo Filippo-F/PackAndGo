@@ -3,13 +3,14 @@ app.py - Configura Flask, Flask-Login e gestisce l'autenticazione utenti.
 Include le funzioni per la gestione delle pagine del sito, delle proposte di viaggio, delle prenotazioni, delle domande-risposte e delle immagini.
 """
 
-from flask import Flask, render_template, redirect, url_for, request, flash
+from flask import Flask, render_template, redirect, url_for, request, flash, session
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_wtf.csrf import CSRFProtect, CSRFError
+from functools import wraps
 
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename   # Per evitare attacchi nel caso in cui il nome del file contenga caratteri speciali che potrebbero essere interpretati come path dal sistema operativo
-import datetime, time, os, secrets
+import datetime, time, os, secrets, json
 
 from PIL import Image   # Pillow - Python Imaging Library used to pre-process images before saving them to the server
 
@@ -21,12 +22,14 @@ PROFILE_FOLDER = "profili/"         # Sottocartella per le immagini profilo
 TRIP_FOLDER = "proposte/"  # Sottocartella per le immagini delle proposte
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 PROFILE_IMG_SIZE = 100  # Thumbnail 100x100 px
-MAX_WIDTH = 800  # Massima larghezza immagine proposta
-MAX_HEIGHT = 600 # Massima altezza immagine proposta
+MAX_WIDTH = 1200  # Massima larghezza immagine proposta (nitida anche su schermi ad alta densità)
+MAX_HEIGHT = 900  # Massima altezza immagine proposta
 MAX_BUDGET = 100_000_000  # Valore massimo di ogni voce di budget, uguale al limite dei campi nel form
 MAX_UPLOAD_MB = 10  # Dimensione massima di una richiesta con upload, oltre Flask risponde con errore 413
 MAX_IMAGE_PIXELS = 50_000_000  # Massimo 50 megapixel: evita immagini piccole su disco ma enormi una volta decompresse
 ERRORI_IMMAGINE = (OSError, ValueError, Image.DecompressionBombError)  # Errori di Pillow per file non validi o troppo grandi
+CAMPI_NON_CONSERVATI = {"password", "password_confirm", "csrf_token"}  # Mai salvati nella sessione: il cookie è firmato ma non cifrato
+MAX_BYTE_CONSERVATI = 2000  # Spazio massimo per i dati conservati: il cookie di sessione non può superare circa 4 KB
 
 
 app = Flask(__name__)
@@ -58,6 +61,63 @@ def file_troppo_grande(e):
     """Gestisce le richieste che superano MAX_CONTENT_LENGTH."""
     flash(f"Errore: File troppo grande, la dimensione massima è {MAX_UPLOAD_MB} MB.", "danger")
     return redirect(url_for('home'))
+
+
+"""
+Conservazione dei dati dei form rifiutati
+"""
+
+
+def conta_errori_flash():
+    """Conta i messaggi flash di errore (categoria "danger") in attesa di essere mostrati."""
+    return sum(1 for categoria, _ in session.get('_flashes', []) if categoria == 'danger')
+
+
+def conserva_form_se_errore(form, modale=None):
+    """Decoratore per le route che ricevono un form: se la route aggiunge un messaggio di errore, salva nella sessione
+    i dati inviati (tranne password e token), così dopo il redirect il template ripopola i campi e riapre il modale.
+    "form" identifica il form e "modale" è l'id HTML del modale da riaprire (se diverso da "form");
+    entrambi possono contenere parametri della route, es. "modificaPropostaModal{id_proposta}"."""
+    def decoratore(funzione):
+        @wraps(funzione)
+        def wrapper(*args, **kwargs):
+            errori_prima = conta_errori_flash()
+            risposta = funzione(*args, **kwargs)
+
+            if conta_errori_flash() > errori_prima:
+                dati = {}
+                spazio_usato = 0
+                for campo, valore in request.form.items():
+                    if campo in CAMPI_NON_CONSERVATI:
+                        continue
+                    dimensione = len(json.dumps(valore))    # Dimensione del valore come verrà scritto nel cookie
+                    if spazio_usato + dimensione > MAX_BYTE_CONSERVATI:
+                        continue    # Un campo troppo grande non viene conservato: meglio un campo vuoto che un cookie scartato dal browser
+                    dati[campo] = valore
+                    spazio_usato += dimensione
+
+                session['form_precedente'] = {
+                    'form': form.format(**kwargs),
+                    'modale': (modale or form).format(**kwargs),
+                    'dati': dati
+                }
+            return risposta
+        return wrapper
+    return decoratore
+
+
+@app.context_processor
+def dati_form_precedente():
+    """Rende disponibili ai template i dati dell'ultimo form rifiutato. Vengono letti una sola volta, come i messaggi flash."""
+    form_precedente = session.pop('form_precedente', None)
+
+    def valore_form(form, campo, predefinito=''):
+        """Restituisce il valore inviato prima dell'errore se "form" è il form rifiutato, altrimenti il valore predefinito."""
+        if form_precedente and form_precedente['form'] == form:
+            return form_precedente['dati'].get(campo, predefinito)
+        return predefinito
+
+    return {'form_precedente': form_precedente, 'valore_form': valore_form}
 
  
 """
@@ -188,6 +248,7 @@ def converti_budget(valore):
 
 @app.route('/nuova_proposta', methods=['POST'])
 @login_required
+@conserva_form_se_errore('aggiungiPropostaModal')
 def nuova_proposta():
     """Permette ai coordinatori di creare una nuova proposta di viaggio."""
     if current_user.tipo_utente != 1:     # Non necessario ma aggiunto per sicurezza maggiore in caso di Html manipulation
@@ -272,6 +333,7 @@ def nuova_proposta():
 
 @app.route('/proposta_modifica/<int:id_proposta>', methods=['POST'])     # "int:id_proposta" è usato per passare l'id della proposta da modificare alla funzione modifica_proposta
 @login_required 
+@conserva_form_se_errore('modificaPropostaModal{id_proposta}')
 def modifica_proposta(id_proposta):
     """Permette ai coordinatori di modificare una proposta di viaggio (solo se in bozza)."""
     if current_user.tipo_utente != 1:
@@ -453,6 +515,7 @@ Gestione delle domande e risposte
 
 @app.route('/domande_aggiungi/<int:id_proposta>', methods=['POST'])
 @login_required
+@conserva_form_se_errore('confirmQuestionModal')
 def aggiungi_domanda(id_proposta):
     """Permette ai viaggiatori di fare una domanda su una proposta."""
     if current_user.tipo_utente != 0:
@@ -485,6 +548,7 @@ def aggiungi_domanda(id_proposta):
 
 @app.route('/domande_rispondi/<int:id_domanda>', methods=['POST'])
 @login_required
+@conserva_form_se_errore('confirmAnswerModal{id_domanda}')
 def rispondi_domanda(id_domanda):
     """Permette ai coordinatori di rispondere a una domanda."""
     if current_user.tipo_utente != 1:
@@ -594,6 +658,7 @@ Gestione degli utenti e autenticazione
 
 
 @app.route('/register', methods=['POST'])
+@conserva_form_se_errore('register', modale='authModal')
 def register():
     """Gestisce la registrazione degli utenti."""
     user_data = request.form.to_dict()    # Ottiene i dati inviati dal form di registrazione
@@ -663,6 +728,7 @@ def register():
 
 
 @app.route('/login', methods=['POST'])
+@conserva_form_se_errore('login', modale='authModal')
 def login():
     """Gestisce il login degli utenti."""
     user_data = request.form.to_dict()

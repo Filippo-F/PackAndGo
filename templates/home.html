@@ -85,7 +85,8 @@
 </div>
 
 <!-- Modale Autenticazione -->
-<div class="modal fade {% if active_tab %}show d-block{% endif %}" id="authModal" tabindex="-1">  <!-- "show d-block" per mostrare la modale -->
+{% set active_tab = form_precedente.form if form_precedente and form_precedente.form in ('login', 'register') else none %}  <!-- Tab del form rifiutato: il modale viene riaperto da base.html -->
+<div class="modal fade" id="authModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header bg-dark text-white text-center">
@@ -96,6 +97,8 @@
                 <div class="text-center mb-3">
                     <p>Accedi per prenotare o registrati per entrare nella community!</p>
                 </div>
+
+                {% with id_form = active_tab %}{% include "_errori_form.html" %}{% endwith %}
                 
                 <!-- Tabs per Login e Registrazione indica quale tab è attiva -->
                 <ul class="nav nav-tabs nav-justified">  <!-- "nav-justified" per allineare le tab al centro -->
@@ -115,7 +118,7 @@
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <div class="mb-3">
                                 <label class="form-label">Username</label>
-                                <input type="text" name="username" class="form-control" required>
+                                <input type="text" name="username" class="form-control" value="{{ valore_form('login', 'username') }}" required>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Password</label>
@@ -131,7 +134,7 @@
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <div class="mb-3">
                                 <label class="form-label">Username</label>
-                                <input type="text" name="username" class="form-control" required maxlength="100">  <!-- "maxlength" limita i caratteri solo nel browser: il limite è ricontrollato dal server e la SQL injection è evitata dalle query parametrizzate -->
+                                <input type="text" name="username" class="form-control" value="{{ valore_form('register', 'username') }}" required maxlength="100">  <!-- "maxlength" limita i caratteri solo nel browser: il limite è ricontrollato dal server e la SQL injection è evitata dalle query parametrizzate -->
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Password</label>
@@ -145,12 +148,12 @@
                                 <label class="form-label">Registrati come:</label>
                                 <select name="tipo_utente" class="form-select" required>
                                     <option value="0">Viaggiatore</option>
-                                    <option value="1">Coordinatore</option>
+                                    <option value="1" {% if valore_form('register', 'tipo_utente') == '1' %}selected{% endif %}>Coordinatore</option>
                                 </select>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Nome <small>(Obbligatorio per Coordinatori)</small></label>
-                                <input type="text" name="nome" class="form-control" maxlength="1000">
+                                <input type="text" name="nome" class="form-control" value="{{ valore_form('register', 'nome') }}" maxlength="1000">
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Immagine Profilo <small>(Solo PNG, JPG o JPEG)</small></label>

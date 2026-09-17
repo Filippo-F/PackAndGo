@@ -1,0 +1,9 @@
+{# Mostra dentro il modale gli errori del form appena rifiutato, così restano leggibili anche con il modale aperto #}
+{# Da includere con: {% with id_form = "..." %}{% include "_errori_form.html" %}{% endwith %} #}
+{% if form_precedente and form_precedente.form == id_form %}
+    {% for categoria, messaggio in get_flashed_messages(with_categories=true) %}
+        {% if categoria == 'danger' %}
+            <div class="alert alert-danger py-2">{{ messaggio }}</div>
+        {% endif %}
+    {% endfor %}
+{% endif %}

@@ -27,11 +27,14 @@ Pack&Go is a fictional service: the contact details shown in the app are placeho
 - Questions to the coordinator on any published trip
 
 ### Coordinators
-- New trip proposals, always created as drafts: destination, dates, maximum participants, description, transport/accommodation/activity budget and an image (resized to at most 800×600)
+- New trip proposals, always created as drafts: destination, dates, maximum participants, description, transport/accommodation/activity budget and an image (resized to at most 1200×900)
 - Edit or delete their own drafts
 - Publish a draft (only if its start date is not in the past); published trips can no longer be modified
 - List of participants for their own trips
 - Answers to questions on their own trips
+
+### All users
+- When a form is rejected, its dialog reopens with the error message and the data already entered, so it can be corrected without starting over (passwords and files are never kept)
 
 ## Tech stack
 

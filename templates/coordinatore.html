@@ -21,14 +21,14 @@
             <h2 class="text-start">Bentornato/a, {{ current_user.nome }}!</h2>
         </div>
         <div class="text-center">
-            <img src="{{ url_for('static', filename='uploads/profili/' ~ (current_user.immagine_profilo or 'default_pro_pic.jpg')) }}" 
+            <img src="{{ url_for('static', filename='uploads/profili/' ~ (current_user.immagine_profilo or 'default_pro_pic.jpg')) }}"
                 alt="Immagine Profilo" class="img-fluid rounded-circle" width="80">
 
             <p class="text-muted mt-2">@{{ current_user.username }}</p>  <!-- "text-muted" per rendere il testo grigio -->
         </div>
     </div>
 </div>
-    
+
 <!-- Bottone Centrale per Creare una Nuova Proposta -->
 <div class="text-center mb-4">
     <button type="button" class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#aggiungiPropostaModal">
@@ -45,42 +45,44 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
+                {% with id_form = 'aggiungiPropostaModal' %}{% include "_errori_form.html" %}{% endwith %}
+                <!-- "valore_form" ripopola i campi con i dati inviati se il form è stato rifiutato -->
                 <form action="{{ url_for('nuova_proposta') }}" method="POST" enctype="multipart/form-data">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-3">
                         <label class="form-label">Destinazione</label>
-                        <input type="text" name="destinazione" class="form-control" maxlength="100" required>
-                    </div>  
+                        <input type="text" name="destinazione" class="form-control" value="{{ valore_form('aggiungiPropostaModal', 'destinazione') }}" maxlength="100" required>
+                    </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">     <!--md usato per schermi medi -->
                             <label class="form-label">Data Inizio</label>
-                            <input type="date" name="data_inizio" class="form-control" required>
+                            <input type="date" name="data_inizio" class="form-control" value="{{ valore_form('aggiungiPropostaModal', 'data_inizio') }}" required>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Data Fine</label>
-                            <input type="date" name="data_fine" class="form-control" required>
+                            <input type="date" name="data_fine" class="form-control" value="{{ valore_form('aggiungiPropostaModal', 'data_fine') }}" required>
                         </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Numero massimo di partecipanti</label>
-                        <input type="number" name="num_massimo" class="form-control" max = "10000" min = "0" required>
+                        <input type="number" name="num_massimo" class="form-control" value="{{ valore_form('aggiungiPropostaModal', 'num_massimo') }}" max = "10000" min = "0" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Descrizione</label>
-                        <textarea name="descrizione" class="form-control" maxlength="1000" required></textarea>
+                        <textarea name="descrizione" class="form-control" maxlength="1000" required>{{ valore_form('aggiungiPropostaModal', 'descrizione') }}</textarea>
                     </div>
                     <div class="row">
                         <div class="col-md-4 mb-3">
                             <label class="form-label">Budget Trasporto (€)</label>
-                            <input type="number" step="0.01" name="budget_trasporto" class="form-control" max="100000000.00" min="0.00" >
+                            <input type="number" step="0.01" name="budget_trasporto" class="form-control" value="{{ valore_form('aggiungiPropostaModal', 'budget_trasporto') }}" max="100000000.00" min="0.00" >
                         </div>
                         <div class="col-md-4 mb-3">
                             <label class="form-label">Budget Alloggio (€)</label>
-                            <input type="number" step="0.01" name="budget_alloggio" class="form-control" max="100000000.00" min="0.00">
+                            <input type="number" step="0.01" name="budget_alloggio" class="form-control" value="{{ valore_form('aggiungiPropostaModal', 'budget_alloggio') }}" max="100000000.00" min="0.00">
                         </div>
                         <div class="col-md-4 mb-3">
                             <label class="form-label">Budget Attività (€)</label>
-                            <input type="number" step="0.01" name="budget_attivita" class="form-control" max="100000000.00" min="0.00">
+                            <input type="number" step="0.01" name="budget_attivita" class="form-control" value="{{ valore_form('aggiungiPropostaModal', 'budget_attivita') }}" max="100000000.00" min="0.00">
                         </div>
                     </div>
                     <div class="mb-3">
@@ -110,29 +112,28 @@
     <!-- Tab Bozze -->
     <div class="tab-pane fade show active" id="bozze">
         {% if bozze %}
-            <div class="container">
+            <!-- Griglia: una proposta per riga su schermi piccoli, due da schermi medi in su ("g-4" = spazio tra le card) -->
+            <div class="row row-cols-1 row-cols-md-2 g-4">
                 {% for proposta in bozze %}
-                    <div class="card shadow-sm mb-4">  <!-- "shadow-sm" per aggiungere ombra -->
+                <div class="col">
+                    <div class="card shadow-sm h-100">  <!-- "shadow-sm" per aggiungere ombra, "h-100" per avere card della stessa altezza -->
                         <!-- Immagine Proposta -->
-                        <img src="{{ url_for('static', filename='uploads/proposte/' ~ (proposta.immagine or 'default_travel_pic.jpg')) }}"   
-                            alt="Immagine Proposta" class="img-fluid w-100" style="max-height: 250px; object-fit: cover;">    <!-- "object-fit: cover" per adattare l'immagine al div -->
+                        <img src="{{ url_for('static', filename='uploads/proposte/' ~ (proposta.immagine or 'default_travel_pic.jpg')) }}"
+                            alt="Immagine Proposta" class="card-img-top img-proposta">    <!-- "img-proposta" (style.css) mantiene le proporzioni senza deformare l'immagine -->
                             <!-- "or 'default_travel_pic.jpg'" per visualizzare l'immagine di default se non è stata caricata alcuna immagine -->
-
 
                         <div class="card-body">
                             <h3 class="card-title">{{ proposta.destinazione }}</h3>
                             <p class="card-text"><strong>Dal:</strong> {{ proposta.data_inizio }} <strong>Al:</strong> {{ proposta.data_fine }}</p>
                             <p class="card-text"><strong>Partecipanti:</strong> {{ proposta.num_massimo }}</p>
-                            <p class="card-text"><strong>Descrizione:</strong> {{ proposta.descrizione }}</p>
-                        </div>
-                            
-                        <div class="row text-center">
-                            <div class="col-md-4"><strong>Trasporto:</strong> €{{ "%.2f"|format(proposta.budget_trasporto or 0) }}</div>
-                            <div class="col-md-4"><strong>Alloggio:</strong> €{{ "%.2f"|format(proposta.budget_alloggio or 0) }}</div>
-                            <div class="col-md-4"><strong>Attività:</strong> €{{ "%.2f"|format(proposta.budget_attivita or 0) }}</div>
-                        </div>
+                            <p class="card-text descrizione-anteprima"><strong>Descrizione:</strong> {{ proposta.descrizione }}</p>   <!-- Anteprima di 3 righe, testo completo nel modale Modifica -->
 
-                        <br>   <!-- Spazio tra i campi -->
+                            <div class="row text-center small">
+                                <div class="col-4"><strong>Trasporto</strong><br>€{{ "%.2f"|format(proposta.budget_trasporto or 0) }}</div>
+                                <div class="col-4"><strong>Alloggio</strong><br>€{{ "%.2f"|format(proposta.budget_alloggio or 0) }}</div>
+                                <div class="col-4"><strong>Attività</strong><br>€{{ "%.2f"|format(proposta.budget_attivita or 0) }}</div>
+                            </div>
+                        </div>
 
                         <!-- Pulsanti Azione -->
                         <div class="card-footer d-flex justify-content-between">
@@ -153,8 +154,6 @@
                         </div>
                     </div>
 
-                    <br>
-                    
                     <!-- Modale Conferma Pubblicazione -->
                     <div class="modal fade" id="confirmPublishModal{{proposta.id}}" tabindex="-1">
                         <div class="modal-dialog">
@@ -167,14 +166,14 @@
                                     <p>Sei sicuro di voler pubblicare questa proposta?</p>
                                     <hr class="my-1">
                                     <p>Ricordati che puoi pubblicare solo proposte con date future.</p>
-                                    <p> (Non scadute) </p> 
+                                    <p> (Non scadute) </p>
                                 </div>
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
                                     <form action="{{ url_for('conferma_pubblicazione', id_proposta=proposta.id) }}" method="POST">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <button type="submit" class="btn btn-success">Pubblica</button>
-                                    </form>                                    
+                                    </form>
                                 </div>
                             </div>
                         </div>
@@ -196,14 +195,15 @@
                                     <form action="{{ url_for('elimina_proposta', id_proposta=proposta.id) }}" method="POST">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <button type="submit" class="btn btn-danger">Elimina</button>
-                                    </form>                                                                    
+                                    </form>
                                 </div>
                             </div>
                         </div>
                     </div>
-                        
+
                     <!-- Modale Modifica Proposta -->
-                    <div class="modal fade" id="modificaPropostaModal{{proposta.id}}" tabindex="-1">
+                    {% set id_modifica = 'modificaPropostaModal' ~ proposta.id %}   <!-- Se la modifica è stata rifiutata, i campi mostrano i dati inviati invece di quelli salvati -->
+                    <div class="modal fade" id="{{ id_modifica }}" tabindex="-1">
                         <div class="modal-dialog modal-lg">
                             <div class="modal-content">
                                <div class="modal-header bg-primary text-white">
@@ -211,42 +211,43 @@
                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                                </div>
                                <div class="modal-body">
+                                   {% with id_form = id_modifica %}{% include "_errori_form.html" %}{% endwith %}
                                    <form action="{{ url_for('modifica_proposta', id_proposta=proposta.id) }}" method="POST" enctype="multipart/form-data">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <div class="mb-3">
                                             <label class="form-label">Destinazione</label>
-                                            <input type="text" name="destinazione" class="form-control" value="{{ proposta.destinazione }}" maxlength="100" required>
+                                            <input type="text" name="destinazione" class="form-control" value="{{ valore_form(id_modifica, 'destinazione', proposta.destinazione) }}" maxlength="100" required>
                                         </div>
                                         <div class="row">
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label">Data Inizio</label>
-                                                <input type="date" name="data_inizio" class="form-control" value="{{ proposta.data_inizio }}" required>
+                                                <input type="date" name="data_inizio" class="form-control" value="{{ valore_form(id_modifica, 'data_inizio', proposta.data_inizio) }}" required>
                                             </div>
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label">Data Fine</label>
-                                                <input type="date" name="data_fine" class="form-control" value="{{ proposta.data_fine }}" required>
+                                                <input type="date" name="data_fine" class="form-control" value="{{ valore_form(id_modifica, 'data_fine', proposta.data_fine) }}" required>
                                             </div>
                                         </div>
                                         <div class="mb-3">
                                             <label class="form-label">Numero massimo di partecipanti</label>
-                                            <input type="number" name="num_massimo" class="form-control" value="{{ proposta.num_massimo }}" max = "10000" min = "0" required>
+                                            <input type="number" name="num_massimo" class="form-control" value="{{ valore_form(id_modifica, 'num_massimo', proposta.num_massimo) }}" max = "10000" min = "0" required>
                                         </div>
                                         <div class="mb-3">
                                             <label class="form-label">Descrizione</label>
-                                            <textarea name="descrizione" class="form-control" maxlength="1000" required>{{ proposta.descrizione }}</textarea>
+                                            <textarea name="descrizione" class="form-control" maxlength="1000" required>{{ valore_form(id_modifica, 'descrizione', proposta.descrizione) }}</textarea>
                                         </div>
                                         <div class="row">
                                            <div class="col-md-4 mb-3">
                                                 <label class="form-label">Budget Trasporto (€)</label>
-                                               <input type="number" step="0.01" name="budget_trasporto" class="form-control" value="{{ proposta.budget_trasporto or '' }}" max="100000000.00" min="0.00">  <!-- "or ''" impone il valore di default a vuoto, in caso di mancata selezione -->
+                                               <input type="number" step="0.01" name="budget_trasporto" class="form-control" value="{{ valore_form(id_modifica, 'budget_trasporto', proposta.budget_trasporto or '') }}" max="100000000.00" min="0.00">  <!-- "or ''" impone il valore di default a vuoto, in caso di mancata selezione -->
                                            </div>
                                            <div class="col-md-4 mb-3">
                                                 <label class="form-label">Budget Alloggio (€)</label>
-                                                <input type="number" step="0.01" name="budget_alloggio" class="form-control" value="{{ proposta.budget_alloggio or '' }}" max="100000000.00" min="0.00">
+                                                <input type="number" step="0.01" name="budget_alloggio" class="form-control" value="{{ valore_form(id_modifica, 'budget_alloggio', proposta.budget_alloggio or '') }}" max="100000000.00" min="0.00">
                                             </div>
                                             <div class="col-md-4 mb-3">
                                                 <label class="form-label">Budget Attività (€)</label>
-                                                <input type="number" step="0.01" name="budget_attivita" class="form-control" value="{{ proposta.budget_attivita or '' }}" max="100000000.00" min="0.00">
+                                                <input type="number" step="0.01" name="budget_attivita" class="form-control" value="{{ valore_form(id_modifica, 'budget_attivita', proposta.budget_attivita or '') }}" max="100000000.00" min="0.00">
                                             </div>
                                         </div>
                                         <div class="mb-3">
@@ -259,6 +260,7 @@
                             </div>
                         </div>
                     </div>
+                </div>
                 {% endfor %}
             </div>
         {% else %}
@@ -269,31 +271,32 @@
 <!-- Tab Pubblicate -->
 <div class="tab-pane fade" id="pubblicate">
     {% if pubblicate %}
-        <div class="container">
+        <div class="row row-cols-1 row-cols-md-2 g-4">
             {% for proposta in pubblicate %}
-                <div class="card shadow-sm mb-4">
-                    
+            <div class="col">
+                <div class="card shadow-sm h-100">
+
                     <!-- Immagine Proposta -->
-                    <img src="{{ url_for('static', filename='uploads/proposte/' ~ (proposta.immagine or 'default_travel_pic.jpg')) }}"  
-                        alt="Immagine Proposta" class="img-fluid w-100" style="max-height: 250px; object-fit: cover;">
+                    <img src="{{ url_for('static', filename='uploads/proposte/' ~ (proposta.immagine or 'default_travel_pic.jpg')) }}"
+                        alt="Immagine Proposta" class="card-img-top img-proposta">
 
                     <div class="card-body">
                         <!-- Destinazione -->
                         <h3 class="card-title d-flex justify-content-between">
                             {{ proposta.destinazione }}
-                            <span class="badge bg-success"><i class="bi bi-check-circle"></i> Pubblicata</span>
+                            <span class="badge bg-success fs-6 align-self-center"><i class="bi bi-check-circle"></i> Pubblicata</span>
                         </h3>
 
                         <!-- Date e Posti -->
                         <p class="card-text">
-                            <strong>Dal:</strong> {{ proposta.data_inizio }}  
-                            <strong>Al:</strong> {{ proposta.data_fine }}  
+                            <strong>Dal:</strong> {{ proposta.data_inizio }}
+                            <strong>Al:</strong> {{ proposta.data_fine }}
                         </p>
-                        <p class="card-text"><strong>Posti disponibili:</strong> {{ proposta.num_massimo }}</p>
+                        <p class="card-text"><strong>Partecipanti massimi:</strong> {{ proposta.num_massimo }}</p>
 
                         <!-- Prezzo Totale -->
                         <p class="card-text">
-                            <strong>Prezzo Totale:</strong> 
+                            <strong>Prezzo Totale:</strong>
                             €{{ "%.2f"|format((proposta.budget_trasporto or 0) + (proposta.budget_alloggio or 0) + (proposta.budget_attivita or 0)) }}
                         </p>
                     </div>
@@ -305,6 +308,7 @@
                         </a>
                     </div>
                 </div>
+            </div>
             {% endfor %}
         </div>
     {% else %}
