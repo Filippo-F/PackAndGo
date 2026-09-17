@@ -691,7 +691,7 @@ def login():
     return redirect(url_for('dashboard'))
 
 
-@app.route("/logout")
+@app.route("/logout", methods=['POST'])     # Solo POST: così il logout è protetto dal token CSRF e un sito esterno non può forzarlo con un semplice link
 @login_required   # Solo utenti autenticati possono eseguire il logout
 def logout():
     """Gestisce il logout degli utenti."""
