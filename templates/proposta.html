@@ -71,7 +71,7 @@
                                      alt="Immagine Utente" class="rounded-circle me-2" width="40">
                                 <strong>@{{ domanda.username_utente or 'Utente' }}</strong>
                             </div>
-                            {% if not domanda.risposta and current_user.tipo_utente == 1 %}
+                            {% if not domanda.risposta and is_proprietario %}
                                 <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#confirmAnswerModal{{ domanda.id }}">
                                     <i class="bi bi-reply"></i> Rispondi
                                 </button>
@@ -102,8 +102,6 @@
                                 <div class="modal-body">
                                     <form action="{{ url_for('rispondi_domanda', id_domanda=domanda.id) }}" method="POST">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-                                        <input type="hidden" name="id_proposta" value="{{ proposta.id }}">  <!-- ID Proposta passato come parametro hidden in quanto necessario per la risposta -->
 
                                         <div class="mb-3">
                                             <label for="testo_risposta" class="form-label">Scrivi la tua risposta:</label>
@@ -137,8 +135,8 @@
                 {% else %}
                     <button class="btn btn-secondary w-100" disabled>Non disponibile</button>   <!-- Pulsante disabilitato se non ci sono posti disponibili -->
                 {% endif %}
-            {% else %}
-                <!-- Sezione Partecipanti per Coordinatori -->
+            {% elif is_proprietario %}
+                <!-- Sezione Partecipanti, visibile solo al coordinatore proprietario -->
                 <h4 class="text-center">Partecipanti iscritti: {{ partecipanti|length }}</h4>   <!-- "lenght" filtro Jinja per ottenere la lunghezza di una lista -->
                 <div class="border rounded shadow-sm p-3" style="max-height: 250px; overflow-y: auto;">
                     <ul class="list-group">

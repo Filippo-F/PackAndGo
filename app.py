@@ -117,11 +117,19 @@ def proposta(id_proposta):
         flash("Errore: La proposta richiesta non esiste.", "danger")
         return redirect(url_for('dashboard'))
 
+    # True solo se l'utente è il coordinatore che ha creato la proposta
+    is_proprietario = current_user.tipo_utente == 1 and proposta['id_coordinatore'] == current_user.id
+
+    # Le bozze sono visibili solo al proprietario: agli altri utenti rispondiamo come se la proposta non esistesse
+    if proposta['stato'] == 0 and not is_proprietario:
+        flash("Errore: La proposta richiesta non esiste.", "danger")
+        return redirect(url_for('dashboard'))
+
     # Se l'utente è un viaggiatore, otteniamo il numero di posti disponibili
     posti_disponibili = prenotazioni_dao.get_posti_disponibili(id_proposta) if current_user.tipo_utente == 0 else None
 
-    # Se l'utente è un coordinatore, otteniamo l'elenco dei partecipanti
-    partecipanti = prenotazioni_dao.get_partecipanti_by_proposta(id_proposta) if current_user.tipo_utente == 1 else []
+    # Solo il coordinatore proprietario può vedere l'elenco dei partecipanti
+    partecipanti = prenotazioni_dao.get_partecipanti_by_proposta(id_proposta) if is_proprietario else []
 
     # Recuperiamo le domande con i dati degli utenti
     domande_raw = domande_risposte_dao.get_domande_by_proposta(id_proposta)
@@ -146,7 +154,7 @@ def proposta(id_proposta):
             "immagine_coordinatore": coordinatore["immagine_profilo"] if coordinatore and coordinatore["immagine_profilo"] else "default_pro_pic.jpg"
         })
 
-    return render_template('proposta.html', proposta=proposta, partecipanti=partecipanti, domande=domande, posti_disponibili=posti_disponibili, prenotato=prenotato)
+    return render_template('proposta.html', proposta=proposta, partecipanti=partecipanti, domande=domande, posti_disponibili=posti_disponibili, prenotato=prenotato, is_proprietario=is_proprietario)
 
 
 """
@@ -468,18 +476,25 @@ def rispondi_domanda(id_domanda):
         flash("Accesso negato: Solo i coordinatori possono rispondere alle domande.", "danger")
         return redirect(url_for('dashboard'))
 
-    testo_risposta = request.form.get("testo_risposta")
-    id_proposta = request.form.get("id_proposta")  # Ottieni l'ID della proposta dalla form
+    domanda = domande_risposte_dao.get_domanda_by_id(id_domanda)
+    if not domanda:
+        flash("Errore: La domanda non esiste.", "danger")
+        return redirect(url_for('dashboard'))
 
+    # L'ID della proposta viene preso dal database e non dal form, così non può essere manipolato dall'utente
+    id_proposta = domanda['id_proposta']
+
+    # Solo il coordinatore proprietario della proposta può rispondere alle domande
+    proposta = proposte_viaggio_dao.get_proposta_by_id(id_proposta)
+    if not proposta or proposta['id_coordinatore'] != current_user.id:
+        flash("Errore: Puoi rispondere solo alle domande sulle tue proposte.", "danger")
+        return redirect(url_for('dashboard'))
+
+    testo_risposta = request.form.get("testo_risposta")
 
     if not testo_risposta:
         flash("Errore: Il testo della risposta non può essere vuoto.", "danger")
         return redirect(url_for('proposta', id_proposta=id_proposta))
-    
-    # Se id_proposta è None, mostra un errore
-    if not id_proposta:
-        flash("Errore interno: ID proposta non ricevuto.", "danger")
-        return redirect(url_for('dashboard'))    # Evitiamo errori se id_proposta non è disponibile (quello inviato con l'input hidden)
 
     success = domande_risposte_dao.rispondi_domanda(id_domanda, testo_risposta)
 

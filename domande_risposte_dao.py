@@ -25,6 +25,22 @@ def get_domande_by_proposta(id_proposta):
     return domande
 
 
+def get_domanda_by_id(id_domanda):
+    """Restituisce una domanda dato il suo ID. Utile per verificare a quale proposta appartiene."""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    sql = 'SELECT * FROM domande_risposte WHERE id = ?'
+    cursor.execute(sql, (id_domanda,))
+    domanda = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
+
+    return domanda
+
+
 def add_domanda(id_viaggiatore, id_proposta, testo_domanda):
     """Aggiunge una domanda fatta da un viaggiatore su una proposta di viaggio."""
     conn = sqlite3.connect(DB_PATH)
