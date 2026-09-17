@@ -5,6 +5,7 @@ Include le funzioni per la gestione delle pagine del sito, delle proposte di via
 
 from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from flask_wtf.csrf import CSRFProtect, CSRFError
 
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename   # Per evitare attacchi nel caso in cui il nome del file contenga caratteri speciali che potrebbero essere interpretati come path dal sistema operativo
@@ -32,10 +33,19 @@ if not app.secret_key:
     app.secret_key = secrets.token_hex(32)
     print("ATTENZIONE: SECRET_KEY non impostata, uso una chiave temporanea valida solo per lo sviluppo locale.")
 
+# Protezione CSRF: tutte le richieste POST devono contenere un token valido generato dal server
+csrf = CSRFProtect(app)
+
 # Configurazione Flask-Login
 login_manager = LoginManager()       # Crea un oggetto di tipo LoginManager
 login_manager.init_app(app)          # Inizializza l'applicazione Flask
 login_manager.login_view = "home"   # Se un utente non autenticato prova ad accedere a una pagina protetta, viene reindirizzato alla pagina "/home"
+
+@app.errorhandler(CSRFError)
+def csrf_error(e):
+    """Gestisce le richieste POST con token CSRF mancante, scaduto o non valido."""
+    flash("Richiesta non valida o sessione scaduta, riprova.", "danger")
+    return redirect(url_for('home'))
 
  
 """

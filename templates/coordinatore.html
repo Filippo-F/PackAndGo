@@ -43,6 +43,7 @@
             </div>
             <div class="modal-body">
                 <form action="{{ url_for('nuova_proposta') }}" method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-3">
                         <label class="form-label">Destinazione</label>
                         <input type="text" name="destinazione" class="form-control" maxlength="100" required>
@@ -168,6 +169,7 @@
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
                                     <form action="{{ url_for('conferma_pubblicazione', id_proposta=proposta.id) }}" method="POST">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <button type="submit" class="btn btn-success">Pubblica</button>
                                     </form>                                    
                                 </div>
@@ -189,6 +191,7 @@
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
                                     <form action="{{ url_for('elimina_proposta', id_proposta=proposta.id) }}" method="POST">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <button type="submit" class="btn btn-danger">Elimina</button>
                                     </form>                                                                    
                                 </div>
@@ -206,6 +209,7 @@
                                </div>
                                <div class="modal-body">
                                    <form action="{{ url_for('modifica_proposta', id_proposta=proposta.id) }}" method="POST" enctype="multipart/form-data">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <div class="mb-3">
                                             <label class="form-label">Destinazione</label>
                                             <input type="text" name="destinazione" class="form-control" value="{{ proposta.destinazione }}" maxlength="100" required>

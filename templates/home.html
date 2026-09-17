@@ -112,6 +112,7 @@
                     <!-- Tab Login -->
                     <div class="tab-pane fade {% if active_tab == 'login' or not active_tab %}show active{% endif %}" id="login">  <!-- "tab-pane" per mostrare il contenuto della tab -->
                         <form action="{{ url_for('login') }}" method="POST">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <div class="mb-3">
                                 <label class="form-label">Username</label>
                                 <input type="text" name="username" class="form-control" required>
@@ -127,6 +128,7 @@
                     <!-- Tab Registrazione -->
                     <div class="tab-pane fade {% if active_tab == 'register' %}show active{% endif %}" id="register">
                         <form action="{{ url_for('register') }}" method="POST" enctype="multipart/form-data">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <div class="mb-3">
                                 <label class="form-label">Username</label>
                                 <input type="text" name="username" class="form-control" required maxlength="100">  <!-- "maxlength" per limitare il numero di caratteri per possibile SQL injection -->
