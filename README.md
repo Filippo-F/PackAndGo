@@ -48,7 +48,6 @@ Pack&Go is a fictional service: the contact details shown in the app are placeho
 | Database | SQLite, accessed through a DAO layer (`*_dao.py`) with parameterized queries |
 | Frontend | Jinja templates, Bootstrap 5, Bootstrap Icons, custom CSS |
 | Images | Pillow |
-| Original deployment | PythonAnywhere |
 
 ## Project structure
 
