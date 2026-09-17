@@ -8,7 +8,7 @@ from flask_login import LoginManager, login_user, logout_user, login_required, c
 
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename   # Per evitare attacchi nel caso in cui il nome del file contenga caratteri speciali che potrebbero essere interpretati come path dal sistema operativo
-import datetime, time
+import datetime, time, os, secrets
 
 from PIL import Image   # Pillow - Python Imaging Library used to pre-process images before saving them to the server
 
@@ -25,7 +25,12 @@ MAX_HEIGHT = 600 # Massima altezza immagine proposta
 
 
 app = Flask(__name__)
-app.secret_key = "chiave_segreta_super_sicura"
+# La chiave segreta firma i cookie di sessione: va letta da variabile d'ambiente e non scritta nel codice
+app.secret_key = os.environ.get("SECRET_KEY")
+if not app.secret_key:
+    # Fallback solo per lo sviluppo locale: chiave casuale diversa a ogni avvio (le sessioni non sopravvivono al riavvio)
+    app.secret_key = secrets.token_hex(32)
+    print("ATTENZIONE: SECRET_KEY non impostata, uso una chiave temporanea valida solo per lo sviluppo locale.")
 
 # Configurazione Flask-Login
 login_manager = LoginManager()       # Crea un oggetto di tipo LoginManager
