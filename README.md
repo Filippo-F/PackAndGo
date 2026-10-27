@@ -45,7 +45,7 @@ Pack&Go is a fictional service: the contact details shown in the app are placeho
 
 | Layer | Technology |
 |---|---|
-| Backend | Python 3.10+, Flask 3.1, Flask-Login, Flask-WTF (CSRF protection) |
+| Backend | Python 3.11+, Flask 3.1, Flask-Login, Flask-WTF (CSRF protection) |
 | Database | SQLite, accessed through a DAO layer (`*_dao.py`) with parameterized queries |
 | Frontend | Jinja templates, Bootstrap 5, Bootstrap Icons, custom CSS |
 | Images | Pillow |
@@ -75,7 +75,7 @@ PackAndGo/
 
 ## Getting started
 
-Requires Python 3.10 or newer.
+Requires Python 3.11 or newer.
 
 ```bash
 git clone https://github.com/Filippo-F/PackAndGo.git
